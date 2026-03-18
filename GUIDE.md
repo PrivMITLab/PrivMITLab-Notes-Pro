@@ -1,75 +1,82 @@
-# 🛡️ PrivMITLab-Notes-Pro: Full Details & Guide (v4.0)
+# 🛡️ PrivMITLab-Notes-Pro: The Professional Security Guide (v4.0)
 
-This document provides a comprehensive overview of **PrivMITLab-Notes-Pro**, its features, its unique value proposition, and why it is the superior choice for private note-taking.
-
----
-
-## 🎯 Why Use PrivMITLab-Notes-Pro? (Ese Kyu Use Kare?)
-
-In a world where most apps track your every word, **PrivMITLab-Notes-Pro** is built on a **Zero-Knowledge Architecture**.
-
-1.  **True Privacy:** Your notes never leave your computer. There is no server, no cloud, and no "Big Tech" company reading your data.
-2.  **Military-Grade Security:** Everything is encrypted using **AES-256-CBC**. Your master key is processed only in RAM and never stored on disk.
-3.  **Maximum Speed:** Since it's a single-file static app, it loads instantly and works perfectly even without an internet connection.
-4.  **No Subscriptions:** You own the software and your data forever. No accounts, no fees, no tracking.
+**PrivMITLab-Notes-Pro** is the definitive standalone solution for high-security note-taking. This document provides an in-depth technical overview of the application's architecture, security protocols, and professional features.
 
 ---
 
-## 🕒 When & For What to Use It? (Kab Aur Kis Liye?)
+## 🎯 Strategic Value Proposition
 
-**PrivMITLab-Notes-Pro** is designed for high-security and high-productivity scenarios:
+In an era of centralized surveillance and cloud-based data harvesting, **PrivMITLab-Notes-Pro** offers an uncompromising **Zero-Knowledge Architecture**.
 
-*   **🔑 Storing Sensitive Information:** Password lists, recovery phrases, and login details.
-*   **📑 Confidential Project Planning:** Drafting business ideas, competitive research, or legal notes that you don't want on a public cloud.
-*   **🎙️ Professional Voice Dictation:** Use the **Speech-to-Text** feature to record thoughts while driving or walking, in either **Hindi or English**.
-*   **🧘 Reading & Proofreading:** Use **Text-to-Speech** with **Word Highlighting** to listen back to your drafts and catch errors effortlessly.
-*   **💼 Professional Reporting:** Use the **Templates** to quickly generate meeting agendas or weekly reviews, and then **Export to PDF** for professional sharing.
+1.  **Absolute Privacy:** Your data never leaves your infrastructure. With zero network dependencies, your information remains entirely offline and isolated.
+2.  **Military-Grade Cryptography:** Every byte is secured with **AES-256-CBC**. Key derivation uses **PBKDF2-SHA256** with 100,000 iterations to resist brute-force attacks.
+3.  **High-Performance Lifecycle:** As a compiled single-file static application, it delivers sub-millisecond responsiveness and complete operability in air-gapped environments.
+4.  **Zero-Asset Ownership:** No accounts, no subscriptions, and zero tracking. You retain 100% ownership of the software and your encrypted data.
 
 ---
 
-## ✨ Features Breakdown (App Mein Kya Kya Hain?)
+## 🔒 Security Architecture & Flow
 
-### 🔒 Security & Privacy (v4.0 Audited)
-*   **Master Key Lock:** Entire vault is locked behind a personal master key.
-*   **Auto-Lock Timer:** Automatically locks the app after inactivity.
-*   **AES-256 Encryption:** Industry-standard encryption for local storage.
-*   **Full Logic Audit:** Verified import/export integrity and cryptographic consistency.
-*   **Burn-After-Reading:** Set sensitive notes to self-destruct once you navigate away.
-*   **Emergency NUKE System:** Instant wipe of all local data for high-risk situations.
+The following diagram illustrates the zero-knowledge lifecycle from authentication to persistence:
 
-### ✍️ Pro Markdown Editor
-*   **Full Markdown Support:** Syntax highlighting for code, tables, and more.
-*   **Live Preview:** See formatted notes in real-time.
-*   **Split View:** Edit and preview side-by-side.
-*   **Find & Replace:** Quickly update text within a note.
+```mermaid
+graph TD
+    A[User Input: Master Key] --> B[PBKDF2-SHA256 Derivation]
+    B --> C{Correct Hash?}
+    C -->|Yes| D[Derive AES-256 Session Key]
+    C -->|No| E[Access Denied]
+    D --> F[Decrypt Notes in RAM]
+    F --> G[Edit / View in Browser]
+    G --> H[Encrypt with New IV on Save]
+    H --> I[Store Encrypted Blob in LocalStorage]
+    I --> J[Lock App -> Wipe Key from RAM]
+```
+
+---
+
+## 🕒 Primary Use Cases
+
+**PrivMITLab-Notes-Pro** is engineered for critical information management:
+
+*   **🔑 Sensitive Credentials:** Securely store recovery phrases, secret keys, and mission-critical access details.
+*   **📑 Strategic Planning:** Drafting proprietary business models, competitive intelligence, or privileged legal documents.
+*   **🎙️ Professional Dictation:** Utilize high-resolution **Speech-to-Text** for accurate, hands-free field notes in **English or Hindi**.
+*   **🧘 Error-Free Proofreading:** Use **Text-to-Speech** with real-time **Word Highlighting** to audit drafts and ensure professional-quality output.
+*   **💼 Executive Reporting:** Leverage professional templates and **PDF Export** to generate clean, high-impact documents for stakeholder distribution.
+
+---
+
+## ✨ Feature Deep-Dive
+
+### 🛡️ Core Security Infrastructure
+- **RAM-Only Master Key:** Sensitive data never touches the persistent disk; keys are purged immediately upon locking or session end.
+- **Atomic Save Operations:** Every save generates a new Initialization Vector (IV), ensuring cryptographic non-repudiation.
+- **Emergency Protocols:** Integrated **NUKE** system for immediate local data sanitization in high-risk scenarios.
+- **Self-Destruct Mechanism:** Burn-after-reading capability for transient, highly sensitive instructions.
 
 ### 🎙️ Advanced Voice Hub
-*   **Multilingual STT:** Dictate notes hands-free in **Hindi or English**.
-*   **Pro Voice Selection:** Choose FROM multiple Male/Female voices per language.
-*   **Real-time Highlighting:** High-contrast yellow highlight follows the spoken word.
-*   **Auto-Sync Scroll:** The editor scrolls automatically to keep the spoken word in view.
+- **Multilingual Recognition:** Professional STT support for English (US) and Hindi (IN).
+- **Pro Voice Synthesis:** High-resolution voice model selection with real-time word boundary detection.
+- **Sync-Scroll Navigation:** Intelligent editor scrolling synchronized with voice playback for efficient auditing.
 
-### 🎨 Customization & UI
-*   **Premium Themes:** Switch between OLED Black, Cyberpunk, Glassmorphism, and more.
-*   **Interface Fonts:** Choose between sleek Sans-serif or professional Monospace.
-*   **Mobile-First Header:** Dynamic mobile header with a unified "More" menu.
-
-### 📦 Productivity Tools
-*   **Note Categories:** Organize your vault into Personal, Work, Ideas, etc.
-*   **Expanded Templates:** Ready-to-use presets for Project Plans, Weekly Reviews, and Meeting Agendas.
-*   **Professional PDF Export:** Clean, distraction-free printing.
-*   **Vault Backup/Restore:** Export your entire encrypted vault with embedded salts for portability.
+### 🎨 Professional Interface
+- **Modern Design System:** Choose from **Glassmorphism**, **OLED Dark**, or **Cyberpunk** themes.
+- **Optimized Typography:** High-legibility Sans-serif or professional Monospace (JetBrains Mono).
+- **Executive Templates:** Pre-configured layouts for **Project Charters**, **Weekly Syncs**, and **Strategy Sessions**.
 
 ---
 
-## 🚀 Future Roadmap (Aur Kya Improve Kare?)
+## 🚀 Future Roadmap
 
-1.  **Encrypted Attachments:** Securely store images within the vault.
-2.  **Biometric Wrapper:** Native Desktop app support for Windows Hello/FaceID.
-3.  **P2P Sync:** Fully decentralized encrypted syncing between your own devices.
-4.  **Advanced Metadata:** More granular tagging and search filters.
+1.  **Direct-to-Vault Attachments:** Encrypted image and asset support.
+2.  **Biometric Authentication:** Hardware-level security integration (via Desktop wrappers).
+3.  **P2P Encrypted Sync:** Fully decentralized, end-to-end encrypted synchronization across trusted local devices.
 
 ---
 
-**Developed with ❤️ by [PrivMITLab](https://github.com/PrivMITLab) (@PrivMITLab)**
-*Security first. Privacy always.*
+<div align="center">
+
+**Developed by [PrivMITLab](https://github.com/PrivMITLab) (@PrivMITLab)**  
+*Privacy is Power.*
+
+</div>
