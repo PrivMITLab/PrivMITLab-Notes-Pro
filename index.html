@@ -90,6 +90,12 @@
             }
         }
 
+        .speech-highlight {
+            background-color: rgba(250, 204, 21, 0.4);
+            color: inherit;
+            border-radius: 2px;
+        }
+
         /* 🖨️ PRINT STYLES (PDF EXPORT) */
         @media print {
             body * {
@@ -1517,6 +1523,18 @@
                     <button class="btn-icon" onclick="toggleFindReplace()" title="Find & Replace (Ctrl+F)">
                         <i class="fas fa-search" style="font-size:11px;"></i>
                     </button>
+                    <div class="tb-sep"></div>
+                    <select id="voice-lang" class="kf-input"
+                        style="width:80px;font-size:11px;padding:4px 8px;height:32px;border-radius:8px;background:rgba(2,6,23,0.5);"
+                        onchange="updateVoiceLang(this.value)" title="Voice Language">
+                        <option value="en-US">English</option>
+                        <option value="hi-IN">Hindi</option>
+                    </select>
+                    <select id="voice-select" class="kf-input"
+                        style="width:110px;font-size:11px;padding:4px 8px;height:32px;border-radius:8px;background:rgba(2,6,23,0.5);"
+                        onchange="updateVoiceModel(this.value)" title="Voice Model">
+                        <option value="">Default Voice</option>
+                    </select>
                     <button id="voice-btn" class="btn-icon" onclick="toggleVoice()" title="Speech to Text">
                         <i id="voice-icon" class="fas fa-microphone"></i>
                     </button>
@@ -1771,6 +1789,8 @@
             categories: ['General', 'Work', 'Personal', 'Ideas', 'Important'],
             readingMode: false,
             findReplace: false,
+            voiceLang: 'en-US',
+            voiceURI: '', // Unique URI of the selected voice
 
             // Timers
             lockTimer: null,
@@ -2776,25 +2796,28 @@
                 </div>
             `);
 
-            window.downloadNote = (format) => {
-                let content = '';
-                let ext = '';
-                if (format === 'md') {
-                    content = note.content;
-                    ext = '.md';
-                } else {
-                    const html = document.getElementById('md-preview').innerHTML;
-                    content = `<!DOCTYPE html><html><head><title>${note.title}</title><style>body{font-family:sans-serif;padding:40px;line-height:1.6;}</style></head><body>${html}</body></html>`;
-                    ext = '.html';
-                }
-                const blob = new Blob([content], { type: 'text/plain' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = note.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ext;
-                a.click();
-                closeModal();
-            };
         }
+
+        window.downloadNote = (format) => {
+            const note = getActiveNote();
+            if (!note) return;
+            let content = '';
+            let ext = '';
+            if (format === 'md') {
+                content = note.content;
+                ext = '.md';
+            } else {
+                const html = document.getElementById('md-preview').innerHTML;
+                content = `<!DOCTYPE html><html><head><title>${note.title}</title><style>body{font-family:sans-serif;padding:40px;line-height:1.6;}</style></head><body>${html}</body></html>`;
+                ext = '.html';
+            }
+            const blob = new Blob([content], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = note.title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ext;
+            a.click();
+            closeModal();
+        };
         function openSettings() {
             const lm = AppState.lockMinutes;
             const opts = [1, 2, 3, 5, 10, 15, 30, 60, 999].map(v =>
@@ -2940,7 +2963,7 @@
             const dk = Crypto.deriveKey(key);
             const payload = JSON.stringify({
                 notes: AppState.notes, exportedAt: new Date().toISOString(),
-                version: '3.0', brand: 'KeyForge Notes Pro', author: '@PrivMITLab',
+                version: '4.0', brand: 'PrivMITLab-Notes-Pro', author: 'PrivMITLab (@PrivMITLab)',
             });
             const salt = localStorage.getItem(LS.SALT);
             const enc = Crypto.encrypt(payload, dk);
@@ -2949,7 +2972,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `keyforge-backup-${Date.now()}.kfnp.json`;
+            a.download = `privmitlab-backup-${Date.now()}.kfnp.json`;
             a.click();
             URL.revokeObjectURL(url);
             closeModal();
@@ -3001,9 +3024,7 @@
                     const obj = JSON.parse(e.target.result);
                     if (!obj.__kfnp) { showToast('Invalid KeyForge backup', 'error'); return; }
                     // Re-derive key using the salt embedded in the export file
-                    const impDK = CryptoJS.PBKDF2(key, obj.salt, {
-                        keySize: 256 / 32, iterations: 100000, hasher: CryptoJS.algo.SHA256
-                    }).toString(CryptoJS.enc.Hex);
+                    const impDK = Crypto.deriveKey(key, obj.salt);
                     const json = Crypto.decrypt(obj.data, impDK);
                     if (!json) { showToast('Wrong master key or corrupted file!', 'error'); return; }
                     const payload = JSON.parse(json);
@@ -3115,7 +3136,7 @@
         <i class="fas fa-shield-check" style="font-size:1.5rem;color:#22c55e;"></i>
         <div>
           <h2 style="font-size:1.05rem;font-weight:800;color:#f1f5f9;">Security Audit Report</h2>
-          <p style="font-size:12px;color:#64748b;">KeyForge Notes Pro v3.0 — ${checks.length} checks · All passed</p>
+          <p style="font-size:12px;color:#64748b;">PrivMITLab-Notes-Pro v4.0 — ${checks.length} checks · All passed</p>
         </div>
       </div>
 
@@ -3138,12 +3159,12 @@
             <p style="color:#475569;font-size:11px;margin-top:2px;">Security Engineer · DevOps · Open Source</p>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <p style="font-size:11px;font-weight:700;color:#818cf8;font-family:'JetBrains Mono',monospace;">KeyForge</p>
+            <p style="font-size:11px;font-weight:700;color:#818cf8;font-family:'JetBrains Mono',monospace;">PrivMITLab</p>
             <p style="font-size:10px;color:#334155;line-height:1.8;">100% Offline<br/>Open Source<br/>Zero-Knowledge</p>
           </div>
         </div>
         <p style="text-align:center;font-size:11px;color:#334155;margin-top:10px;font-family:'JetBrains Mono',monospace;line-height:1.7;">
-          KeyForge — 100% Offline | Open Source | Zero-Knowledge Security<br/>
+          PrivMITLab-Notes-Pro — 100% Offline | Open Source | Zero-Knowledge Security<br/>
           Built by PrivMITLab (@PrivMITLab)
         </p>
       </div>
@@ -3258,8 +3279,42 @@
 
             const text = note.content.replace(/[#*`>\[\]_~\-!]/g, ''); // strip MD
             speechUtterance = new SpeechSynthesisUtterance(text);
+
+            // Language & voice selection
+            const lang = AppState.voiceLang || 'en-US';
+            speechUtterance.lang = lang;
+
+            const voices = window.speechSynthesis.getVoices();
+            if (AppState.voiceURI) {
+                const selected = voices.find(v => v.voiceURI === AppState.voiceURI);
+                if (selected) speechUtterance.voice = selected;
+            } else if (voices.length > 0) {
+                const preferred = voices.find(v => v.lang === lang) ||
+                    voices.find(v => v.lang.startsWith(lang.split('-')[0]));
+                if (preferred) speechUtterance.voice = preferred;
+            }
+
             speechUtterance.rate = 1.0;
             speechUtterance.pitch = 1.0;
+
+            speechUtterance.onboundary = (event) => {
+                if (event.name === 'word') {
+                    const charIndex = event.charIndex;
+                    const charLength = event.charLength || (text.slice(charIndex).split(/\s+/)[0].length);
+                    const ta = document.getElementById('note-editor');
+                    if (ta) {
+                        // Find the word in the original content (mapping might be offset by MD stripping)
+                        // Simple approach: find the word at approx index in original
+                        // Better: Use selection to highlight the word in editor
+                        ta.focus();
+                        ta.setSelectionRange(charIndex, charIndex + charLength);
+                        // Scroll textarea to the selection
+                        const lineHeight = parseFloat(getComputedStyle(ta).lineHeight);
+                        const linesBefore = ta.value.substr(0, charIndex).split('\n').length;
+                        ta.scrollTop = (linesBefore - 5) * lineHeight;
+                    }
+                }
+            };
 
             speechUtterance.onstart = () => {
                 btn.classList.add('active');
@@ -3268,10 +3323,14 @@
             speechUtterance.onend = () => {
                 btn.classList.remove('active');
                 icon.className = 'fas fa-volume-high';
+                const ta = document.getElementById('note-editor');
+                if (ta) ta.setSelectionRange(0, 0); // Clear highlight
             };
             speechUtterance.onerror = () => {
                 btn.classList.remove('active');
                 icon.className = 'fas fa-volume-high';
+                const ta = document.getElementById('note-editor');
+                if (ta) ta.setSelectionRange(0, 0);
             };
 
             window.speechSynthesis.speak(speechUtterance);
@@ -3297,7 +3356,7 @@
             recognition = new SpeechRec();
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = 'en-US';
+            recognition.lang = AppState.voiceLang || 'en-US';
 
             recognition.onstart = () => {
                 btn.classList.add('active');
@@ -3336,6 +3395,43 @@
             recognition.start();
         }
 
+        function updateVoiceLang(lang) {
+            AppState.voiceLang = lang;
+            AppState.voiceURI = ''; // Reset voice when language changes
+            updateVoiceOptions();
+            const stgs = Store.loadSettings();
+            Store.saveSettings({ ...stgs, voiceLang: lang, voiceURI: '' });
+            showToast('Language: ' + (lang === 'hi-IN' ? 'Hindi' : 'English'), 'success');
+        }
+
+        function updateVoiceOptions() {
+            const sel = document.getElementById('voice-select');
+            if (!sel) return;
+            const voices = window.speechSynthesis.getVoices();
+            const lang = AppState.voiceLang;
+
+            const filtered = voices.filter(v => v.lang.startsWith(lang.split('-')[0]));
+
+            sel.innerHTML = '<option value="">Default Voice</option>';
+            filtered.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v.voiceURI;
+                opt.textContent = v.name + (v.localService ? ' (Local)' : '');
+                if (v.voiceURI === AppState.voiceURI) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        }
+
+        function updateVoiceModel(uri) {
+            AppState.voiceURI = uri;
+            const stgs = Store.loadSettings();
+            Store.saveSettings({ ...stgs, voiceURI: uri });
+            showToast('Voice model updated', 'success');
+        }
+
+        // Voice List handling
+        window.speechSynthesis.onvoiceschanged = updateVoiceOptions;
+
         /* ================================================================
            SECTION 26 — KEYBOARD SHORTCUTS
         ================================================================ */
@@ -3356,6 +3452,18 @@
            SECTION 27 — BOOT
         ================================================================ */
         (function boot() {
+            const stgs = Store.loadSettings();
+            if (stgs.voiceLang) {
+                AppState.voiceLang = stgs.voiceLang;
+                const sel = document.getElementById('voice-lang');
+                if (sel) sel.value = stgs.voiceLang;
+            }
+            if (stgs.voiceURI) {
+                AppState.voiceURI = stgs.voiceURI;
+            }
+            updateVoiceOptions();
+            if (stgs.fontMode) setFontMode(stgs.fontMode);
+
             checkVoiceSupport();
             // Configure marked (v9 compatible)
             marked.use({
@@ -3374,9 +3482,9 @@
             }, 120);
 
             // Console branding
-            console.log('%c🔐 KeyForge Notes Pro v3.0', 'font-size:15px;font-weight:bold;color:#818cf8;');
+            console.log('%c🔐 PrivMITLab-Notes-Pro v4.0', 'font-size:15px;font-weight:bold;color:#818cf8;');
             console.log('%c100% Offline | Open Source | Zero-Knowledge Security', 'color:#22d3ee;');
-            console.log('%cBuilt by @PrivMITLab', 'color:#64748b;');
+            console.log('%cBuilt by PrivMITLab (@PrivMITLab)', 'color:#64748b;');
             console.log('%c⚠ Do not paste unknown code here!', 'color:#ef4444;font-weight:bold;font-size:13px;');
         })();
     </script>
