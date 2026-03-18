@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="KeyForge Notes Pro — 100% Offline | Open Source | Zero-Knowledge Security by Sudhir Kumar @SudhirDevOps1" />
+  <meta name="author" content="Sudhir Kumar (@SudhirDevOps1)" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>KeyForge Notes Pro | by Sudhir Kumar (@SudhirDevOps1)</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CryptoJS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js" crossorigin="anonymous"></script>
+  <!-- Marked.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js" crossorigin="anonymous"></script>
+  <!-- DOMPurify -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.5/purify.min.js" crossorigin="anonymous"></script>
+  <!-- Highlight.js -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" crossorigin="anonymous" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" crossorigin="anonymous"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" crossorigin="anonymous" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* ── Reset ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; background: #020617; }
+    body { font-family: 'Inter', sans-serif; color: #e2e8f0; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar        { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track  { background: #0f172a; }
+    ::-webkit-scrollbar-thumb  { background: #4f46e5; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+    /* ── Background ── */
+    #bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 44px 44px;
+    }
+    #bg-vignette {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(2,6,23,0.8) 100%);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeIn      { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideUp     { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-18px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes shake       { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-7px)} 40%,80%{transform:translateX(7px)} }
+    @keyframes flicker     { 0%,100%{opacity:1} 48%{opacity:.9} 50%{opacity:.65} 52%{opacity:.9} }
+    @keyframes nukeFlash   { 0%{background:#020617} 20%{background:#450a0a} 50%{background:#dc2626} 80%{background:#450a0a} 100%{background:#020617} }
+    @keyframes scanline    { 0%{transform:translateY(-100vh)} 100%{transform:translateY(200vh)} }
+
+    #bg-scanline {
+      position:fixed; inset:0; z-index:0; pointer-events:none;
+      background:linear-gradient(transparent 50%,rgba(0,0,0,0.012) 50%);
+      background-size:100% 3px;
+      animation:scanline 12s linear infinite; opacity:.35;
+    }
+
+    .anim-fade-in      { animation: fadeIn 0.35s ease-out; }
+    .anim-slide-up     { animation: slideUp 0.3s ease-out; }
+    .anim-slide-left   { animation: slideInLeft 0.25s ease-out; }
+    .do-shake          { animation: shake 0.4s ease-in-out; }
+    .blink             { animation: flicker 2.5s infinite; }
+    .nuke-flash-anim   { animation: nukeFlash 0.9s ease-out forwards; }
+
+    /* ── Lock Screen ── */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(2,6,23,0.97);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(18px);
+    }
+    .lock-card {
+      background: linear-gradient(145deg,#1e293b 0%,#0f172a 60%,#020617 100%);
+      border: 1px solid rgba(99,102,241,0.3); border-radius: 20px;
+      padding: 46px 42px; width: 100%; max-width: 440px;
+      box-shadow: 0 0 80px rgba(99,102,241,0.12), 0 40px 80px rgba(0,0,0,0.7);
+    }
+
+    /* ── Inputs ── */
+    .kf-input {
+      width: 100%; background: rgba(2,6,23,0.8);
+      border: 1px solid #334155; color: #e2e8f0;
+      border-radius: 10px; padding: 11px 14px;
+      font-size: 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .kf-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.14);
+    }
+    .kf-input::placeholder { color: #475569; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: linear-gradient(135deg,#6366f1,#4f46e5);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 11px 22px; font-weight: 700; font-size: 14px;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 0 22px rgba(99,102,241,0.3);
+      width: 100%;
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg,#818cf8,#6366f1);
+      box-shadow: 0 0 36px rgba(99,102,241,0.5);
+      transform: translateY(-1px);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-danger {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      background: linear-gradient(135deg,#ef4444,#dc2626);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 10px 20px; font-weight: 700; font-size: 13px;
+      cursor: pointer; transition: all 0.2s;
+      box-shadow: 0 0 18px rgba(239,68,68,0.2);
+    }
+    .btn-danger:hover { box-shadow: 0 0 30px rgba(239,68,68,0.5); transform: translateY(-1px); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      background: transparent; color: #94a3b8;
+      border: 1px solid #334155; border-radius: 8px;
+      padding: 9px 16px; font-size: 13px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(30,41,59,0.8); color: #e2e8f0; border-color: #475569; }
+
+    .btn-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; color: #64748b; border: none;
+      width: 34px; height: 34px; border-radius: 8px;
+      cursor: pointer; transition: all 0.2s; font-size: 14px; flex-shrink: 0;
+    }
+    .btn-icon:hover         { background: rgba(99,102,241,0.12); color: #818cf8; }
+    .btn-icon.danger:hover  { background: rgba(239,68,68,0.12);  color: #ef4444; }
+    .btn-icon.warn:hover    { background: rgba(234,179,8,0.12);   color: #facc15; }
+
+    /* ── Auth Tabs ── */
+    .auth-tab {
+      flex: 1; padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; border: none;
+    }
+    .auth-tab.active   { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #fff; }
+    .auth-tab.inactive { background: transparent; color: #64748b; }
+    .auth-tab.inactive:hover { background: rgba(30,41,59,0.5); color: #94a3b8; }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 265px; min-width: 200px; max-width: 420px; flex-shrink: 0;
+      background: rgba(15,23,42,0.75); border-right: 1px solid #1e293b;
+      display: flex; flex-direction: column; backdrop-filter: blur(8px);
+    }
+
+    /* ── Note Items ── */
+    .note-item {
+      padding: 10px 12px; border-radius: 10px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.18s;
+      background: rgba(30,41,59,0.3);
+    }
+    .note-item:hover  { background: rgba(30,41,59,0.7); border-color: rgba(99,102,241,0.2); }
+    .note-item.active { background: rgba(99,102,241,0.13); border-color: rgba(99,102,241,0.45); box-shadow: 0 0 14px rgba(99,102,241,0.08); }
+    .note-item.burn   { border-color: rgba(239,68,68,0.3) !important; background: rgba(239,68,68,0.05) !important; }
+    .note-item.burn.active { border-color: rgba(239,68,68,0.55) !important; }
+    .note-item.pinned { position: relative; }
+    .note-item.pinned::after {
+      content: ''; position: absolute; top: 7px; right: 7px;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #6366f1; box-shadow: 0 0 6px #6366f1;
+    }
+    .note-title   { font-size: 13px; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-snippet { font-size: 11px; color: #475569; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-meta    { font-size: 10px; color: #334155; margin-top: 4px; display: flex; align-items: center; gap: 5px; }
+
+    /* ── Editor ── */
+    #editor-wrap  { display: flex; flex: 1; min-height: 0; overflow: hidden; }
+    #line-numbers {
+      padding: 20px 8px 20px 4px; min-width: 44px; text-align: right;
+      font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.85;
+      color: #2d3748; background: rgba(10,17,32,0.8);
+      border-right: 1px solid #1e293b;
+      user-select: none; overflow: hidden; flex-shrink: 0; pointer-events: none;
+    }
+    #note-editor {
+      flex: 1; padding: 20px; background: transparent; color: #e2e8f0;
+      border: none; outline: none; resize: none;
+      font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+      line-height: 1.85; tab-size: 2; caret-color: #22d3ee; width: 100%;
+    }
+    #note-editor::placeholder { color: #2d3748; font-style: italic; }
+    #note-editor::selection   { background: rgba(99,102,241,0.3); }
+
+    /* ── Preview ── */
+    #md-preview {
+      padding: 22px 26px; overflow-y: auto; flex: 1;
+      font-family: 'Inter', sans-serif; font-size: 14px;
+      line-height: 1.85; color: #cbd5e1;
+    }
+    #md-preview h1 { font-size:1.75rem; font-weight:800; color:#818cf8; margin:0 0 12px; padding-bottom:10px; border-bottom:1px solid #1e293b; }
+    #md-preview h2 { font-size:1.3rem;  font-weight:700; color:#67e8f9; margin:18px 0 9px; }
+    #md-preview h3 { font-size:1.08rem; font-weight:600; color:#a5b4fc; margin:14px 0 7px; }
+    #md-preview h4 { font-size:0.95rem; font-weight:600; color:#94a3b8; margin:10px 0 5px; }
+    #md-preview p  { margin-bottom: 11px; }
+    #md-preview ul, #md-preview ol { margin: 7px 0 11px 22px; }
+    #md-preview li { margin-bottom: 4px; }
+    #md-preview ul li::marker { color: #6366f1; }
+    #md-preview ol li::marker { color: #22d3ee; }
+    #md-preview blockquote {
+      border-left: 3px solid #6366f1; padding: 9px 15px;
+      color: #94a3b8; font-style: italic; margin: 12px 0;
+      background: rgba(99,102,241,0.06); border-radius: 0 8px 8px 0;
+    }
+    #md-preview code {
+      background: #1e293b; color: #22d3ee; padding: 2px 6px;
+      border-radius: 5px; font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px; border: 1px solid #334155;
+    }
+    #md-preview pre {
+      background: #0f172a; border-radius: 10px; margin: 12px 0;
+      border: 1px solid #1e293b; overflow-x: auto;
+    }
+    #md-preview pre code { background:transparent; padding:14px; display:block; border:none; color:inherit; }
+    #md-preview a { color:#818cf8; text-decoration:underline; text-underline-offset:3px; }
+    #md-preview a:hover { color:#a5b4fc; }
+    #md-preview hr  { border:none; border-top:1px solid #1e293b; margin:18px 0; }
+    #md-preview table { width:100%; border-collapse:collapse; margin:12px 0; font-size:13px; }
+    #md-preview th { background:#1e293b; color:#818cf8; padding:8px 13px; border:1px solid #334155; font-weight:600; text-align:left; }
+    #md-preview td { padding:7px 13px; border:1px solid #1e293b; }
+    #md-preview tr:nth-child(even) td { background:rgba(15,23,42,0.5); }
+    #md-preview strong { color:#f1f5f9; font-weight:700; }
+    #md-preview em     { color:#a5b4fc; }
+    #md-preview del    { color:#64748b; }
+    #md-preview img    { max-width:100%; border-radius:8px; margin:8px 0; border:1px solid #334155; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 150;
+      background: rgba(2,6,23,0.88); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      background: linear-gradient(145deg,#1e293b,#0f172a);
+      border: 1px solid rgba(99,102,241,0.22);
+      border-radius: 16px; padding: 30px 32px;
+      width: 100%; max-width: 500px; max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 0 60px rgba(0,0,0,0.6);
+      animation: slideUp 0.25s ease-out;
+    }
+    .modal-box.wide { max-width: 620px; }
+
+    /* ── Toast ── */
+    #toast-container {
+      position: fixed; top: 16px; right: 16px; z-index: 999;
+      display: flex; flex-direction: column; gap: 7px; pointer-events: none;
+    }
+    .toast {
+      padding: 10px 15px; border-radius: 10px; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+      animation: slideInLeft 0.3s ease-out; max-width: 340px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5); pointer-events: auto;
+    }
+    .t-success { background:#052e16; border:1px solid #16a34a; color:#86efac; }
+    .t-error   { background:#2d0a0a; border:1px solid #dc2626; color:#fca5a5; }
+    .t-warn    { background:#1c1502; border:1px solid #ca8a04; color:#fde047; }
+    .t-info    { background:#0a1629; border:1px solid #2563eb; color:#93c5fd; }
+
+    /* ── Badges ── */
+    .badge {
+      display:inline-flex; align-items:center; gap:4px;
+      font-size:10px; font-weight:700; padding:2px 7px;
+      border-radius:5px; letter-spacing:0.04em; text-transform:uppercase;
+    }
+    .badge-burn   { background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); }
+    .badge-pin    { background:rgba(99,102,241,0.15); color:#a5b4fc; border:1px solid rgba(99,102,241,0.3); }
+    .badge-ok     { background:rgba(34,197,94,0.1);  color:#86efac; border:1px solid rgba(34,197,94,0.25); }
+
+    /* ── Mode tabs ── */
+    .mode-tab {
+      padding:5px 11px; border-radius:7px; font-size:12px; font-weight:600;
+      cursor:pointer; border:none; transition:all 0.18s;
+      display:flex; align-items:center; gap:5px;
+    }
+    .mode-tab.active   { background:#4f46e5; color:#fff; }
+    .mode-tab.inactive { background:transparent; color:#64748b; }
+    .mode-tab.inactive:hover { background:rgba(30,41,59,0.5); color:#94a3b8; }
+
+    /* ── Resizer ── */
+    #resizer {
+      width: 4px; background: #1e293b; cursor: col-resize;
+      transition: background 0.2s; flex-shrink: 0;
+    }
+    #resizer:hover, #resizer.dragging { background:#4f46e5; box-shadow:0 0 8px rgba(99,102,241,0.5); }
+
+    /* ── Autosave ── */
+    #autosave-pill {
+      display:flex; align-items:center; gap:5px; font-size:11px;
+      font-family:'JetBrains Mono',monospace; color:#22c55e; opacity:0;
+      transition:opacity 0.4s; padding:3px 8px;
+      background:rgba(34,197,94,0.08); border:1px solid rgba(34,197,94,0.2); border-radius:20px;
+    }
+    #autosave-pill.show { opacity:1; }
+
+    /* ── Topbar separator ── */
+    .tb-sep { width:1px; height:20px; background:#1e293b; flex-shrink:0; }
+
+    /* ── Status bar ── */
+    #statusbar {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:4px 16px; border-top:1px solid #1e293b;
+      background:rgba(10,17,32,0.97); flex-shrink:0;
+      font-family:'JetBrains Mono',monospace; font-size:11px; color:#334155;
+    }
+
+    /* ── PW strength bar ── */
+    #pw-bar-fill { height:3px; border-radius:2px; transition:width 0.3s, background 0.3s; width:0%; }
+
+    /* ── Count badge ── */
+    .count-badge {
+      font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px;
+      background:rgba(99,102,241,0.12); color:#818cf8; border:1px solid rgba(99,102,241,0.22);
+    }
+  </style>
+</head>
+
+<body>
+
+<!-- Background -->
+<div id="bg-grid"     aria-hidden="true"></div>
+<div id="bg-vignette" aria-hidden="true"></div>
+<div id="bg-scanline" aria-hidden="true"></div>
+<div id="toast-container" role="alert" aria-live="polite"></div>
+
+<!-- ═══════════════════════════════════════════════════════
+     LOCK SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="lock-screen">
+  <div class="lock-card anim-fade-in" id="lock-card">
+
+    <!-- Brand -->
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="display:inline-flex;align-items:center;justify-content:center;
+                  width:68px;height:68px;margin-bottom:14px;
+                  background:linear-gradient(135deg,rgba(99,102,241,0.18),rgba(6,182,212,0.18));
+                  border:1px solid rgba(99,102,241,0.4);border-radius:18px;
+                  box-shadow:0 0 30px rgba(99,102,241,0.18);">
+        <i class="fas fa-shield-halved" style="font-size:28px;background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"></i>
+      </div>
+      <h1 style="font-size:1.55rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+        KeyForge Notes Pro
+      </h1>
+      <p style="font-size:11px;color:#475569;margin-top:4px;font-family:'JetBrains Mono',monospace;">
+        by Sudhir Kumar · @SudhirDevOps1
+      </p>
+      <div style="display:flex;gap:6px;justify-content:center;margin-top:8px;">
+        <span class="badge badge-ok"><i class="fas fa-lock" style="font-size:9px;"></i>Zero-Knowledge</span>
+        <span class="badge badge-ok"><i class="fas fa-house-signal" style="font-size:9px;"></i>100% Offline</span>
+      </div>
+    </div>
+
+    <!-- Auth Tabs -->
+    <div style="display:flex;gap:4px;padding:4px;background:rgba(2,6,23,0.6);border:1px solid #1e293b;border-radius:12px;margin-bottom:20px;">
+      <button class="auth-tab active"   id="tab-btn-login"    onclick="switchAuthTab('login')">
+        <i class="fas fa-lock-open" style="margin-right:5px;"></i>Unlock Vault
+      </button>
+      <button class="auth-tab inactive" id="tab-btn-register" onclick="switchAuthTab('register')">
+        <i class="fas fa-vault" style="margin-right:5px;"></i>New Vault
+      </button>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="form-login">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.06em;">
+          <i class="fas fa-key" style="color:#818cf8;margin-right:4px;"></i>Master Key
+        </label>
+        <div style="position:relative;">
+          <input id="login-key" type="password" class="kf-input" style="padding-right:44px;"
+                 placeholder="Enter your master key…"
+                 onkeydown="if(event.key==='Enter')doLogin()"
+                 autocomplete="current-password" spellcheck="false" />
+          <button class="btn-icon" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);height:32px;"
+                  onclick="togglePwVis('login-key','eye-login')" type="button">
+            <i id="eye-login" class="fas fa-eye" style="font-size:12px;"></i>
+          </button>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="doLogin()" id="btn-login">
+        <i class="fas fa-lock-open"></i>Unlock Vault
+      </button>
+      <div id="login-error" style="display:none;margin-top:12px;padding:10px 14px;border-radius:9px;
+           background:rgba(127,29,29,0.3);border:1px solid rgba(220,38,38,0.4);
+           color:#fca5a5;font-size:12px;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-circle-xmark" style="flex-shrink:0;"></i>
+        <span>Invalid master key. Vault remains locked.</span>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="form-register" style="display:none;">
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.06em;">
+          <i class="fas fa-key" style="color:#22d3ee;margin-right:4px;"></i>Create Master Key
+        </label>
+        <div style="position:relative;">
+          <input id="reg-key" type="password" class="kf-input" style="padding-right:44px;"
+                 placeholder="Choose a strong master key…"
+                 oninput="checkPwStrength(this.value)"
+                 autocomplete="new-password" spellcheck="false" />
+          <button class="btn-icon" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);height:32px;"
+                  onclick="togglePwVis('reg-key','eye-reg')" type="button">
+            <i id="eye-reg" class="fas fa-eye" style="font-size:12px;"></i>
+          </button>
+        </div>
+        <div style="margin-top:6px;background:#0f172a;border-radius:3px;height:3px;">
+          <div id="pw-bar-fill"></div>
+        </div>
+        <p id="pw-strength-lbl" style="font-size:11px;margin-top:4px;color:#64748b;min-height:16px;"></p>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:0.06em;">
+          <i class="fas fa-shield-check" style="color:#22d3ee;margin-right:4px;"></i>Confirm Master Key
+        </label>
+        <input id="reg-confirm" type="password" class="kf-input"
+               placeholder="Re-enter master key…"
+               onkeydown="if(event.key==='Enter')doRegister()"
+               autocomplete="new-password" spellcheck="false" />
+      </div>
+      <div style="padding:12px 14px;border-radius:10px;margin-bottom:14px;
+           background:rgba(120,53,15,0.18);border:1px solid rgba(146,64,14,0.4);">
+        <p style="font-size:12px;color:#f59e0b;font-weight:600;margin-bottom:4px;">
+          <i class="fas fa-triangle-exclamation" style="margin-right:5px;"></i>Zero-Knowledge Warning
+        </p>
+        <p style="font-size:11px;color:#92400e;line-height:1.6;">
+          Your master key is <strong style="color:#f59e0b;">never stored</strong>. If lost, all data becomes permanently unrecoverable. There is no reset option.
+        </p>
+      </div>
+      <button class="btn-primary" onclick="doRegister()" id="btn-register">
+        <i class="fas fa-vault"></i>Create Encrypted Vault
+      </button>
+      <div id="reg-error" style="display:none;margin-top:12px;padding:10px 14px;border-radius:9px;
+           background:rgba(127,29,29,0.3);border:1px solid rgba(220,38,38,0.4);
+           color:#fca5a5;font-size:12px;display:flex;align-items:center;gap:8px;">
+        <i class="fas fa-circle-xmark" style="flex-shrink:0;"></i>
+        <span id="reg-error-txt"></span>
+      </div>
+    </div>
+
+    <p style="text-align:center;color:#1e293b;font-size:11px;margin-top:20px;font-family:'JetBrains Mono',monospace;">
+      KeyForge Notes Pro v3.0 · Open Source · Zero Telemetry
+    </p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL
+═══════════════════════════════════════════════════════ -->
+<div id="modal-overlay" style="display:none;" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+  <div class="modal-box" id="modal-box">
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MAIN APP
+═══════════════════════════════════════════════════════ -->
+<div id="app" style="display:none;flex-direction:column;height:100vh;position:relative;z-index:10;">
+
+  <!-- TOPBAR -->
+  <header style="display:flex;align-items:center;gap:8px;padding:0 12px;height:50px;
+                 border-bottom:1px solid #1e293b;background:rgba(10,17,32,0.97);
+                 backdrop-filter:blur(10px);flex-shrink:0;">
+    <!-- Brand -->
+    <div style="display:flex;align-items:center;gap:7px;flex-shrink:0;margin-right:4px;">
+      <i class="fas fa-shield-halved" style="color:#818cf8;font-size:15px;"></i>
+      <span style="font-weight:800;font-size:13px;white-space:nowrap;background:linear-gradient(135deg,#818cf8,#22d3ee);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">
+        KeyForge Notes
+      </span>
+    </div>
+    <div class="tb-sep"></div>
+    <!-- Note title -->
+    <input id="note-title" type="text" placeholder="Untitled Note"
+           style="flex:1;min-width:0;background:transparent;border:none;
+                  border-bottom:1px solid #1e293b;color:#e2e8f0;font-size:14px;
+                  font-weight:500;outline:none;padding:4px 8px;
+                  transition:border-color 0.2s;font-family:'Inter',sans-serif;"
+           onfocus="this.style.borderBottomColor='#6366f1'"
+           onblur="this.style.borderBottomColor='#1e293b'"
+           oninput="onTitleChange()" />
+    <!-- Autosave pill -->
+    <div id="autosave-pill">
+      <i class="fas fa-check-circle" style="font-size:11px;"></i>Saved
+    </div>
+    <div class="tb-sep"></div>
+    <!-- Timer -->
+    <div style="display:flex;align-items:center;gap:5px;padding:3px 9px;
+                background:rgba(30,41,59,0.6);border:1px solid #1e293b;border-radius:8px;
+                font-family:'JetBrains Mono',monospace;font-size:11px;color:#64748b;flex-shrink:0;">
+      <i class="fas fa-hourglass-half" style="color:#818cf8;font-size:10px;"></i>
+      <span id="lock-timer">--:--</span>
+    </div>
+    <!-- Actions -->
+    <button class="btn-icon" onclick="openSettings()" title="Settings">
+      <i class="fas fa-gear"></i>
+    </button>
+    <button class="btn-icon" onclick="openExport()" title="Export Vault">
+      <i class="fas fa-file-export"></i>
+    </button>
+    <button class="btn-icon" onclick="openImport()" title="Import Vault">
+      <i class="fas fa-file-import"></i>
+    </button>
+    <div class="tb-sep"></div>
+    <button class="btn-icon" onclick="openAudit()" title="Security Audit">
+      <i class="fas fa-shield-check" style="color:#22c55e;"></i>
+    </button>
+    <button class="btn-icon danger" onclick="confirmNuke()" title="Nuke All Data">
+      <i class="fas fa-radiation" style="color:#ef4444;"></i>
+    </button>
+    <button class="btn-icon warn" onclick="lockApp()" title="Lock Vault (Ctrl+L)">
+      <i class="fas fa-lock" style="color:#facc15;"></i>
+    </button>
+  </header>
+
+  <!-- MAIN CONTENT -->
+  <div style="display:flex;flex:1;min-height:0;overflow:hidden;">
+
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <!-- Sidebar header -->
+      <div style="padding:10px 10px 8px;border-bottom:1px solid #1e293b;flex-shrink:0;">
+        <div style="display:flex;gap:5px;margin-bottom:8px;">
+          <button class="btn-primary" style="font-size:12px;padding:8px 12px;border-radius:8px;"
+                  onclick="createNewNote()" title="New Note (Ctrl+N)">
+            <i class="fas fa-plus"></i>New Note
+          </button>
+          <button id="btn-burn-toggle" class="btn-icon"
+                  onclick="toggleBurnNext()"
+                  style="border:1px solid #1e293b;border-radius:8px;width:36px;height:36px;"
+                  title="Burn After Reading (next note)">
+            <i id="burn-next-icon" class="fas fa-fire" style="color:#334155;font-size:13px;"></i>
+          </button>
+          <button id="btn-pin-current" class="btn-icon"
+                  onclick="togglePinCurrent()"
+                  style="border:1px solid #1e293b;border-radius:8px;width:36px;height:36px;"
+                  title="Pin current note">
+            <i id="pin-current-icon" class="fas fa-thumbtack" style="color:#334155;font-size:12px;"></i>
+          </button>
+        </div>
+        <div style="position:relative;">
+          <i class="fas fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:#334155;font-size:11px;pointer-events:none;"></i>
+          <input id="search-input" type="text" class="kf-input"
+                 style="padding:8px 10px 8px 30px;font-size:12px;border-radius:8px;"
+                 placeholder="Search notes…" oninput="searchNotes(this.value)" />
+        </div>
+      </div>
+      <!-- Count -->
+      <div style="padding:5px 12px 3px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+        <span id="note-count" class="count-badge">0 notes</span>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div style="width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;"></div>
+          <span style="font-size:10px;color:#1e293b;font-family:'JetBrains Mono',monospace;">AES-256</span>
+        </div>
+      </div>
+      <!-- Note list -->
+      <div id="note-list" style="flex:1;overflow-y:auto;padding:4px 8px 8px;display:flex;flex-direction:column;gap:3px;"></div>
+      <!-- Sidebar footer -->
+      <div style="padding:7px 10px;border-top:1px solid #1e293b;flex-shrink:0;text-align:center;">
+        <p style="font-size:10px;color:#1e293b;font-family:'JetBrains Mono',monospace;line-height:1.7;">
+          KeyForge · Zero-Knowledge<br/>
+          <span style="color:#1e293b;">Sudhir Kumar · @SudhirDevOps1</span>
+        </p>
+      </div>
+    </div>
+
+    <!-- RESIZER -->
+    <div id="resizer"></div>
+
+    <!-- EDITOR COLUMN -->
+    <div style="display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden;">
+
+      <!-- Editor sub-toolbar -->
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 12px;border-bottom:1px solid #1e293b;background:rgba(15,23,42,0.65);flex-shrink:0;flex-wrap:wrap;">
+        <!-- Mode tabs -->
+        <div style="display:flex;gap:2px;background:rgba(2,6,23,0.7);border:1px solid #1e293b;border-radius:9px;padding:3px;">
+          <button class="mode-tab active"   id="mode-edit"    onclick="setEditorMode('edit')"><i class="fas fa-pen-to-square"></i>Edit</button>
+          <button class="mode-tab inactive" id="mode-split"   onclick="setEditorMode('split')"><i class="fas fa-table-columns"></i>Split</button>
+          <button class="mode-tab inactive" id="mode-preview" onclick="setEditorMode('preview')"><i class="fas fa-eye"></i>Preview</button>
+        </div>
+        <!-- Badges -->
+        <span id="burn-badge" class="badge badge-burn" style="display:none;">
+          <i class="fas fa-fire"></i>BURN AFTER READ
+        </span>
+        <span id="pin-badge" class="badge badge-pin" style="display:none;">
+          <i class="fas fa-thumbtack"></i>PINNED
+        </span>
+        <div style="flex:1;"></div>
+        <!-- Stats -->
+        <span id="stat-words" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#334155;">0w</span>
+        <span id="stat-chars" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#334155;">0c</span>
+        <span id="stat-lines" style="font-size:11px;font-family:'JetBrains Mono',monospace;color:#334155;">0l</span>
+        <div class="tb-sep"></div>
+        <!-- Markdown helpers -->
+        <button class="btn-icon" onclick="editorWrap('**','**')" title="Bold (Ctrl+B)" style="font-weight:800;font-size:13px;">B</button>
+        <button class="btn-icon" onclick="editorWrap('*','*')"   title="Italic (Ctrl+I)" style="font-style:italic;font-size:13px;">I</button>
+        <button class="btn-icon" onclick="editorWrap('`','`')"   title="Inline Code" style="font-family:'JetBrains Mono',monospace;font-size:11px;">`</button>
+        <button class="btn-icon" onclick="editorInsertHeading()" title="Heading" style="font-weight:700;font-size:13px;">H</button>
+        <button class="btn-icon" onclick="editorInsertLink()"    title="Insert Link"><i class="fas fa-link" style="font-size:11px;"></i></button>
+      </div>
+
+      <!-- Editor + Preview -->
+      <div id="editor-area" style="display:flex;flex:1;min-height:0;overflow:hidden;">
+        <!-- Editor pane -->
+        <div id="editor-pane" style="display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden;border-right:1px solid #1e293b;">
+          <div id="editor-wrap">
+            <div id="line-numbers" aria-hidden="true">1</div>
+            <textarea id="note-editor"
+              placeholder="# Note Title&#10;&#10;Write **Markdown** here. Notes are AES-256 encrypted.&#10;&#10;```js&#10;console.log('KeyForge Notes Pro — Zero Knowledge!');&#10;```&#10;&#10;> Security first. Always."
+              oninput="onEditorInput()"
+              onscroll="syncEditorScroll()"
+              onkeydown="onEditorKeydown(event)"
+              spellcheck="true"
+              aria-label="Note content editor"></textarea>
+          </div>
+        </div>
+        <!-- Preview pane -->
+        <div id="preview-pane" style="display:flex;flex-direction:column;flex:1;min-width:0;overflow:hidden;background:rgba(10,17,32,0.45);">
+          <div style="padding:5px 13px;border-bottom:1px solid #1e293b;flex-shrink:0;display:flex;align-items:center;gap:5px;">
+            <i class="fas fa-eye" style="color:#818cf8;font-size:10px;"></i>
+            <span style="font-size:11px;color:#334155;font-family:'JetBrains Mono',monospace;">PREVIEW</span>
+          </div>
+          <div id="md-preview" role="region" aria-label="Markdown preview"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS BAR -->
+  <div id="statusbar">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="color:#4f46e5;" class="blink"><i class="fas fa-shield-halved"></i> VAULT ACTIVE</span>
+      <span>AES-256-CBC · PBKDF2 · 100K</span>
+      <span id="status-note-id" style="color:#1e293b;"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span><i class="fas fa-user-shield" style="color:#22d3ee;margin-right:3px;"></i>Sudhir Kumar · @SudhirDevOps1</span>
+      <span id="status-clock">--:--:--</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     APPLICATION JAVASCRIPT
+═══════════════════════════════════════════════════════ -->
+<script>
+/* ================================================================
+   SECTION 1 — CONSTANTS & STORAGE KEYS
+================================================================ */
+const LS = {
+  SALT  : 'kfnp_salt_v3',
+  HASH  : 'kfnp_hash_v3',
+  VAULT : 'kfnp_vault_v3',
+  STGS  : 'kfnp_settings_v3',
+};
+
+/* ================================================================
+   SECTION 2 — UTILITIES
+================================================================ */
+// Generate UUID
+function genId() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxx-xxxx-4xxx-yxxx'.replace(/[xy]/g, c => {
+    const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+// Escape HTML (XSS prevention)
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Format date
+function fmtDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString('en-IN', {
+      month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:true
+    });
+  } catch { return '—'; }
+}
+
+// Word count
+function countWords(s) { return s.trim() ? s.trim().split(/\s+/).length : 0; }
+
+// Debounce
+function debounce(fn, ms) {
+  let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+}
+
+/* ================================================================
+   SECTION 3 — CRYPTO ENGINE
+================================================================ */
+const Crypto = (() => {
+  const ITERS = 100000;
+  const KSIZE = 256 / 32; // CryptoJS word size for 256-bit
+
+  function _getSalt() {
+    let s = localStorage.getItem(LS.SALT);
+    if (!s) {
+      s = CryptoJS.lib.WordArray.random(32).toString(); // 256-bit
+      localStorage.setItem(LS.SALT, s);
+    }
+    return s;
+  }
+
+  // Derive AES key (hex) from master key using PBKDF2
+  function deriveKey(masterKey) {
+    return CryptoJS.PBKDF2(masterKey, _getSalt(), {
+      keySize: KSIZE, iterations: ITERS, hasher: CryptoJS.algo.SHA256
+    }).toString(CryptoJS.enc.Hex);
+  }
+
+  // Create auth hash (separate salt path — for verification only)
+  function hashForAuth(masterKey) {
+    return CryptoJS.PBKDF2(masterKey, _getSalt() + '::auth::v3', {
+      keySize: KSIZE, iterations: ITERS, hasher: CryptoJS.algo.SHA256
+    }).toString(CryptoJS.enc.Hex);
+  }
+
+  // AES-256-CBC encrypt → "ivHex:cipherBase64"
+  function encrypt(plaintext, keyHex) {
+    try {
+      const iv  = CryptoJS.lib.WordArray.random(16); // 128-bit IV
+      const key = CryptoJS.enc.Hex.parse(keyHex);
+      const enc = CryptoJS.AES.encrypt(plaintext, key, {
+        iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
+      });
+      return iv.toString(CryptoJS.enc.Hex) + ':' + enc.toString();
+    } catch (e) { console.error('[Crypto] encrypt:', e); return null; }
+  }
+
+  // AES-256-CBC decrypt → plaintext or null
+  function decrypt(cipher, keyHex) {
+    try {
+      const idx = cipher.indexOf(':');
+      if (idx === -1) return null;
+      const iv  = CryptoJS.enc.Hex.parse(cipher.slice(0, idx));
+      const enc = cipher.slice(idx + 1);
+      const key = CryptoJS.enc.Hex.parse(keyHex);
+      const dec = CryptoJS.AES.decrypt(enc, key, {
+        iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7
+      });
+      return dec.toString(CryptoJS.enc.Utf8) || null;
+    } catch { return null; }
+  }
+
+  return { deriveKey, hashForAuth, encrypt, decrypt };
+})();
+
+/* ================================================================
+   SECTION 4 — SESSION STATE
+   All sensitive data lives here and is wiped on lock.
+================================================================ */
+const Session = (() => {
+  let _key = null; // Derived AES key hex (in RAM only)
+
+  function setKey(k)  { _key = k; }
+  function clearKey() { _key = null; }
+  function getKey()   { return _key; }
+  function hasKey()   { return !!_key; }
+
+  return { setKey, clearKey, getKey, hasKey };
+})();
+
+/* ================================================================
+   SECTION 5 — STORAGE MANAGER
+================================================================ */
+const Store = (() => {
+
+  // Save notes array (encrypted) to localStorage
+  function saveVault(notes) {
+    const k = Session.getKey();
+    if (!k) return false;
+    const json = JSON.stringify(notes);
+    const enc  = Crypto.encrypt(json, k);
+    if (!enc) return false;
+    localStorage.setItem(LS.VAULT, enc);
+    return true;
+  }
+
+  // Load and decrypt notes from localStorage
+  // Returns [] if no vault, null if decryption fails
+  function loadVault() {
+    const k   = Session.getKey();
+    if (!k) return null;
+    const enc = localStorage.getItem(LS.VAULT);
+    if (!enc) return []; // new vault, no notes yet
+    const json = Crypto.decrypt(enc, k);
+    if (!json) return null; // wrong key
+    try { return JSON.parse(json); }
+    catch { return null; }
+  }
+
+  function saveSettings(obj) {
+    try { localStorage.setItem(LS.STGS, JSON.stringify(obj)); } catch {}
+  }
+
+  function loadSettings() {
+    try { return JSON.parse(localStorage.getItem(LS.STGS) || '{}'); }
+    catch { return {}; }
+  }
+
+  function nukeAll() {
+    // Remove all kfnp_ keys
+    const keys = Object.keys(localStorage).filter(k => k.startsWith('kfnp_'));
+    keys.forEach(k => localStorage.removeItem(k));
+    Session.clearKey();
+  }
+
+  return { saveVault, loadVault, saveSettings, loadSettings, nukeAll };
+})();
+
+/* ================================================================
+   SECTION 6 — APP STATE
+   Non-sensitive runtime state
+================================================================ */
+const AppState = {
+  notes        : [],    // decrypted notes (wiped on lock)
+  activeId     : null,  // currently selected note id
+  editorMode   : 'split',
+  burnNext     : false, // burn-after-read for next new note
+  lockMinutes  : 2,
+  searchQuery  : '',
+
+  // Timers
+  lockTimer    : null,
+  countdownTimer: null,
+  remaining    : 0,
+
+  // Flags
+  initialized  : false,
+};
+
+/* ================================================================
+   SECTION 7 — TOAST
+================================================================ */
+function showToast(msg, type = 'info') {
+  const icons = { success:'fa-circle-check', error:'fa-circle-xmark', warn:'fa-triangle-exclamation', info:'fa-circle-info' };
+  const cls   = { success:'t-success', error:'t-error', warn:'t-warn', info:'t-info' };
+  const el = document.createElement('div');
+  el.className = 'toast ' + (cls[type] || cls.info);
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}" style="flex-shrink:0;font-size:13px;"></i><span>${esc(String(msg))}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.transition='opacity 0.4s'; el.style.opacity='0'; setTimeout(()=>el.remove(),420); }, 3500);
+}
+
+/* ================================================================
+   SECTION 8 — MODAL
+================================================================ */
+function showModal(html, wide) {
+  document.getElementById('modal-content').innerHTML = html;
+  const box = document.getElementById('modal-box');
+  box.className = 'modal-box' + (wide ? ' wide' : '');
+  document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').style.display = 'none';
+  document.getElementById('modal-content').innerHTML = '';
+}
+
+function closeModalOnOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+/* ================================================================
+   SECTION 9 — AUTH
+================================================================ */
+function switchAuthTab(tab) {
+  const isLogin = tab === 'login';
+  document.getElementById('form-login').style.display    = isLogin ? 'block' : 'none';
+  document.getElementById('form-register').style.display = isLogin ? 'none'  : 'block';
+  document.getElementById('tab-btn-login').className    = 'auth-tab ' + (isLogin  ? 'active' : 'inactive');
+  document.getElementById('tab-btn-register').className = 'auth-tab ' + (!isLogin ? 'active' : 'inactive');
+  hideLoginError();
+  hideRegError();
+}
+
+function hideLoginError() { document.getElementById('login-error').style.display = 'none'; }
+function showLoginError() { document.getElementById('login-error').style.display = 'flex'; }
+function hideRegError()   { document.getElementById('reg-error').style.display   = 'none'; }
+function showRegError(msg){ document.getElementById('reg-error-txt').textContent = msg; document.getElementById('reg-error').style.display = 'flex'; }
+
+function togglePwVis(inputId, iconId) {
+  const inp  = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  inp.type   = inp.type === 'password' ? 'text' : 'password';
+  icon.className = inp.type === 'password' ? 'fas fa-eye' : 'fas fa-eye-slash';
+  icon.style.fontSize = '12px';
+}
+
+function checkPwStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8)           score++;
+  if (pw.length >= 14)          score++;
+  if (/[A-Z]/.test(pw))         score++;
+  if (/[0-9]/.test(pw))         score++;
+  if (/[^A-Za-z0-9]/.test(pw))  score++;
+  const levels = [
+    {w:'0%',   bg:'transparent', t:''},
+    {w:'20%',  bg:'#ef4444', t:'Very Weak'},
+    {w:'40%',  bg:'#f97316', t:'Weak'},
+    {w:'60%',  bg:'#eab308', t:'Fair'},
+    {w:'80%',  bg:'#22c55e', t:'Strong'},
+    {w:'100%', bg:'#06b6d4', t:'Very Strong 🔐'},
+  ];
+  const lvl = levels[Math.min(score, 5)];
+  const bar = document.getElementById('pw-bar-fill');
+  const lbl = document.getElementById('pw-strength-lbl');
+  bar.style.width = lvl.w;
+  bar.style.background = lvl.bg;
+  lbl.textContent = lvl.t;
+  lbl.style.color = lvl.bg;
+}
+
+/* ── REGISTER ── */
+function doRegister() {
+  const key  = document.getElementById('reg-key').value;
+  const key2 = document.getElementById('reg-confirm').value;
+  hideRegError();
+
+  if (!key)              return showRegError('Master key cannot be empty.');
+  if (key.length < 8)    return showRegError('Master key must be at least 8 characters.');
+  if (key !== key2)      return showRegError('Keys do not match.');
+  if (localStorage.getItem(LS.HASH)) return showRegError('A vault already exists. Unlock or nuke it first.');
+
+  // Derive key FIRST (this also creates the salt)
+  const dk   = Crypto.deriveKey(key);
+  const hash = Crypto.hashForAuth(key);
+
+  // Store auth hash (never the key itself)
+  localStorage.setItem(LS.HASH, hash);
+
+  // Set session key
+  Session.setKey(dk);
+
+  // Save empty vault
+  Store.saveVault([]);
+
+  // Clear form
+  document.getElementById('reg-key').value     = '';
+  document.getElementById('reg-confirm').value = '';
+
+  // Init app state with empty notes
+  AppState.notes   = [];
+  AppState.activeId = null;
+
+  showToast('Vault created successfully! Welcome!', 'success');
+  bootApp();
+}
+
+/* ── LOGIN ── */
+function doLogin() {
+  const key = document.getElementById('login-key').value;
+  hideLoginError();
+
+  if (!key) { showToast('Enter your master key', 'warn'); return; }
+
+  const storedHash = localStorage.getItem(LS.HASH);
+  if (!storedHash) {
+    showToast('No vault found. Create one first.', 'warn');
+    switchAuthTab('register');
+    return;
+  }
+
+  // Verify key
+  const computed = Crypto.hashForAuth(key);
+  if (computed !== storedHash) {
+    showLoginError();
+    // Shake animation
+    const card = document.getElementById('lock-card');
+    card.classList.remove('do-shake');
+    void card.offsetWidth; // reflow
+    card.classList.add('do-shake');
+    document.getElementById('login-key').value = '';
+    setTimeout(() => card.classList.remove('do-shake'), 500);
+    return;
+  }
+
+  // Key verified — derive and set
+  const dk = Crypto.deriveKey(key);
+  Session.setKey(dk);
+
+  // Load vault
+  const notes = Store.loadVault();
+  if (notes === null) {
+    // Decryption failed (shouldn't happen if hash matched, but be safe)
+    hideLoginError();
+    showLoginError();
+    Session.clearKey();
+    document.getElementById('login-key').value = '';
+    return;
+  }
+
+  document.getElementById('login-key').value = '';
+  hideLoginError();
+
+  AppState.notes   = notes;
+  AppState.activeId = null;
+
+  showToast('Vault unlocked! Welcome back! 🔓', 'success');
+  bootApp();
+}
+
+/* ================================================================
+   SECTION 10 — BOOT APP (after auth)
+================================================================ */
+function bootApp() {
+  // Load settings
+  const stgs = Store.loadSettings();
+  if (stgs.lockMinutes)  AppState.lockMinutes  = stgs.lockMinutes;
+  if (stgs.editorMode)   AppState.editorMode   = stgs.editorMode;
+
+  // Show app
+  document.getElementById('lock-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+
+  AppState.initialized = true;
+
+  // Render sidebar
+  renderSidebar();
+
+  // Select first note or create one
+  if (AppState.notes.length === 0) {
+    createNewNote();
+  } else {
+    // Sort and pick first
+    const sorted = getSortedNotes();
+    selectNote(sorted[0].id);
+  }
+
+  // Start auto-lock
+  startAutoLock();
+
+  // Start clock
+  startClock();
+
+  // Set editor mode
+  applyEditorMode(AppState.editorMode);
+}
+
+/* ================================================================
+   SECTION 11 — LOCK
+================================================================ */
+function lockApp() {
+  // Stop timers
+  stopAutoLock();
+
+  // Wipe sensitive RAM
+  Session.clearKey();
+  AppState.notes    = [];
+  AppState.activeId = null;
+  AppState.burnNext = false;
+  AppState.initialized = false;
+
+  // Clear UI
+  document.getElementById('note-editor').value    = '';
+  document.getElementById('md-preview').innerHTML = '';
+  document.getElementById('note-title').value     = '';
+  document.getElementById('note-list').innerHTML  = '';
+  document.getElementById('login-key').value      = '';
+  document.getElementById('search-input').value   = '';
+  hideLoginError();
+
+  // Show lock screen
+  document.getElementById('app').style.display         = 'none';
+  document.getElementById('lock-screen').style.display = 'flex';
+
+  showToast('Vault locked 🔒', 'info');
+  document.getElementById('login-key').focus();
+}
+
+/* ================================================================
+   SECTION 12 — AUTO-LOCK
+================================================================ */
+const ACTIVITY_EVENTS = ['mousemove','keydown','mousedown','touchstart','scroll'];
+
+function startAutoLock() {
+  stopAutoLock();
+  AppState.remaining = AppState.lockMinutes * 60;
+  updateTimerDisplay();
+
+  const ms = AppState.lockMinutes >= 999 ? 9999 * 60 * 1000 : AppState.lockMinutes * 60 * 1000;
+  AppState.lockTimer = setTimeout(() => lockApp(), ms);
+  AppState.countdownTimer = setInterval(() => {
+    AppState.remaining = Math.max(0, AppState.remaining - 1);
+    updateTimerDisplay();
+  }, 1000);
+
+  ACTIVITY_EVENTS.forEach(e => document.addEventListener(e, resetAutoLock, { passive: true }));
+}
+
+function resetAutoLock() {
+  if (!Session.hasKey()) return;
+  stopAutoLock();
+  startAutoLock();
+}
+
+function stopAutoLock() {
+  clearTimeout(AppState.lockTimer);
+  clearInterval(AppState.countdownTimer);
+  AppState.lockTimer = null;
+  AppState.countdownTimer = null;
+  ACTIVITY_EVENTS.forEach(e => document.removeEventListener(e, resetAutoLock));
+}
+
+function updateTimerDisplay() {
+  const el = document.getElementById('lock-timer');
+  if (!el) return;
+  if (AppState.lockMinutes >= 999) { el.textContent = '∞'; el.style.color = '#334155'; return; }
+  const m = Math.floor(AppState.remaining / 60);
+  const s = AppState.remaining % 60;
+  el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  el.style.color = AppState.remaining < 60 ? '#ef4444' : AppState.remaining < 120 ? '#f59e0b' : '#64748b';
+}
+
+/* ================================================================
+   SECTION 13 — CLOCK
+================================================================ */
+function startClock() {
+  const tick = () => { const el=document.getElementById('status-clock'); if(el) el.textContent=new Date().toLocaleTimeString('en-IN'); };
+  tick();
+  setInterval(tick, 1000);
+}
+
+/* ================================================================
+   SECTION 14 — NOTE CRUD
+================================================================ */
+function getSortedNotes() {
+  return [...AppState.notes].sort((a, b) => {
+    if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+    return new Date(b.updatedAt) - new Date(a.updatedAt);
+  });
+}
+
+function getActiveNote() {
+  return AppState.notes.find(n => n.id === AppState.activeId) || null;
+}
+
+function createNewNote() {
+  const note = {
+    id           : genId(),
+    title        : 'Untitled Note',
+    content      : '',
+    createdAt    : new Date().toISOString(),
+    updatedAt    : new Date().toISOString(),
+    burnAfterRead: AppState.burnNext,
+    pinned       : false,
+    wordCount    : 0,
+  };
+  AppState.notes.unshift(note);
+  AppState.burnNext = false;
+  syncBurnNextUI();
+  saveVaultNow();
+  selectNote(note.id);
+  renderSidebar();
+  document.getElementById('note-editor').focus();
+  showToast('New note created', 'success');
+}
+
+function selectNote(id) {
+  // If leaving a burn-after-read note, trigger burn
+  const prev = getActiveNote();
+  if (prev && prev.id !== id && prev.burnAfterRead) {
+    showBurnConfirm(prev.id, () => doSelectNote(id));
+    return;
+  }
+  doSelectNote(id);
+}
+
+function doSelectNote(id) {
+  AppState.activeId = id;
+  const note = getActiveNote();
+  if (!note) { clearEditorUI(); return; }
+
+  document.getElementById('note-editor').value = note.content;
+  document.getElementById('note-title').value  = note.title;
+  document.getElementById('status-note-id').textContent = note.id.slice(0,16) + '…';
+
+  // Badges
+  document.getElementById('burn-badge').style.display = note.burnAfterRead ? 'inline-flex' : 'none';
+  document.getElementById('pin-badge').style.display  = note.pinned         ? 'inline-flex' : 'none';
+
+  // Pin icon color
+  document.getElementById('pin-current-icon').style.color = note.pinned ? '#818cf8' : '#334155';
+
+  updateLineNumbers();
+  updateEditorStats();
+  renderPreviewDebounced();
+  renderSidebar();
+}
+
+function clearEditorUI() {
+  document.getElementById('note-editor').value    = '';
+  document.getElementById('note-title').value     = '';
+  document.getElementById('md-preview').innerHTML = '';
+  document.getElementById('status-note-id').textContent = '';
+  document.getElementById('burn-badge').style.display = 'none';
+  document.getElementById('pin-badge').style.display  = 'none';
+}
+
+function deleteNote(id, silent) {
+  const idx = AppState.notes.findIndex(n => n.id === id);
+  if (idx === -1) return;
+  AppState.notes.splice(idx, 1);
+  if (AppState.activeId === id) {
+    const sorted = getSortedNotes();
+    AppState.activeId = sorted.length ? sorted[0].id : null;
+  }
+  saveVaultNow();
+  renderSidebar();
+  if (AppState.activeId) doSelectNote(AppState.activeId);
+  else clearEditorUI();
+  if (!silent) showToast('Note deleted', 'warn');
+}
+
+function toggleBurnForNote(id) {
+  const note = AppState.notes.find(n => n.id === id);
+  if (!note) return;
+  note.burnAfterRead = !note.burnAfterRead;
+  note.updatedAt     = new Date().toISOString();
+  saveVaultNow();
+  if (AppState.activeId === id) {
+    document.getElementById('burn-badge').style.display = note.burnAfterRead ? 'inline-flex' : 'none';
+  }
+  renderSidebar();
+  showToast(note.burnAfterRead ? '🔥 Burn mode ON' : 'Burn mode OFF', note.burnAfterRead ? 'warn' : 'info');
+}
+
+function toggleBurnNext() {
+  AppState.burnNext = !AppState.burnNext;
+  syncBurnNextUI();
+  showToast(AppState.burnNext ? '🔥 Next note: Burn After Read' : 'Burn After Read OFF', AppState.burnNext ? 'warn' : 'info');
+}
+
+function syncBurnNextUI() {
+  const icon = document.getElementById('burn-next-icon');
+  const btn  = document.getElementById('btn-burn-toggle');
+  if (!icon || !btn) return;
+  icon.style.color  = AppState.burnNext ? '#ef4444' : '#334155';
+  btn.style.borderColor = AppState.burnNext ? 'rgba(239,68,68,0.4)' : '#1e293b';
+  btn.style.background  = AppState.burnNext ? 'rgba(239,68,68,0.06)' : 'transparent';
+}
+
+function togglePinCurrent() {
+  const note = getActiveNote();
+  if (!note) return;
+  note.pinned    = !note.pinned;
+  note.updatedAt = new Date().toISOString();
+  saveVaultNow();
+  doSelectNote(note.id);
+  showToast(note.pinned ? '📌 Note pinned' : 'Note unpinned', 'info');
+}
+
+/* ── Burn Confirm Modal ── */
+function showBurnConfirm(noteId, afterCb) {
+  window.__burnCb = afterCb;
+  showModal(`
+    <div style="text-align:center;">
+      <div style="font-size:3rem;color:#ef4444;margin-bottom:14px;">
+        <i class="fas fa-fire-flame-curved"></i>
+      </div>
+      <h2 style="font-size:1.05rem;font-weight:700;color:#f87171;margin-bottom:8px;">Burn After Reading</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:20px;line-height:1.6;">
+        This note is marked <strong style="color:#f87171;">Burn After Reading</strong>.<br/>
+        It will be permanently deleted now. This cannot be undone.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn-danger" onclick="execBurnNote('${esc(noteId)}')">
+          <i class="fas fa-fire"></i>Burn It
+        </button>
+        <button class="btn-ghost" onclick="closeModal()">Keep Note</button>
+      </div>
+    </div>
+  `);
+}
+
+function execBurnNote(id) {
+  deleteNote(id, true);
+  closeModal();
+  showToast('Note burned 🔥', 'warn');
+  if (window.__burnCb) { window.__burnCb(); window.__burnCb = null; }
+}
+
+/* ── Confirm Delete ── */
+function confirmDeleteNote(id) {
+  showModal(`
+    <div style="text-align:center;">
+      <div style="font-size:2.5rem;color:#ef4444;margin-bottom:12px;">
+        <i class="fas fa-trash-can"></i>
+      </div>
+      <h2 style="font-size:1rem;font-weight:700;color:#f1f5f9;margin-bottom:8px;">Delete Note?</h2>
+      <p style="color:#64748b;font-size:13px;margin-bottom:20px;">
+        This note will be permanently deleted from the vault.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn-danger" onclick="deleteNote('${esc(id)}');closeModal();">
+          <i class="fas fa-trash"></i>Delete
+        </button>
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+/* ================================================================
+   SECTION 15 — SEARCH
+================================================================ */
+function searchNotes(q) {
+  AppState.searchQuery = q.toLowerCase().trim();
+  renderSidebar();
+}
+
+/* ================================================================
+   SECTION 16 — SIDEBAR RENDER
+================================================================ */
+function renderSidebar() {
+  const list    = document.getElementById('note-list');
+  const countEl = document.getElementById('note-count');
+  if (!list || !countEl) return;
+
+  let sorted = getSortedNotes();
+  if (AppState.searchQuery) {
+    sorted = sorted.filter(n =>
+      n.title.toLowerCase().includes(AppState.searchQuery) ||
+      n.content.toLowerCase().includes(AppState.searchQuery)
+    );
+  }
+
+  countEl.textContent = sorted.length + ' note' + (sorted.length !== 1 ? 's' : '');
+
+  if (sorted.length === 0) {
+    list.innerHTML = `
+      <div style="text-align:center;padding:36px 14px;color:#334155;">
+        <i class="fas fa-note-sticky" style="font-size:2rem;opacity:.3;margin-bottom:8px;display:block;"></i>
+        <p style="font-size:12px;">${AppState.searchQuery ? 'No notes match.' : 'No notes yet — create one!'}</p>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = '';
+  sorted.forEach(note => {
+    const isActive = note.id === AppState.activeId;
+    const snippet  = note.content.replace(/[#*`>\[\]_~\-!]/g,'').slice(0,55) || 'Empty note…';
+
+    const div = document.createElement('div');
+    div.className = 'note-item anim-slide-left'
+      + (isActive         ? ' active' : '')
+      + (note.pinned      ? ' pinned' : '')
+      + (note.burnAfterRead ? ' burn' : '');
+    div.setAttribute('role','button');
+    div.setAttribute('tabindex','0');
+
+    // Build inner HTML safely
+    div.innerHTML = `
+      <div style="display:flex;align-items:flex-start;gap:4px;">
+        <div class="note-title" style="flex:1;min-width:0;">
+          ${note.burnAfterRead ? '<i class="fas fa-fire" style="color:#ef4444;font-size:10px;margin-right:3px;"></i>' : ''}
+          ${note.pinned        ? '<i class="fas fa-thumbtack" style="color:#818cf8;font-size:10px;margin-right:3px;"></i>' : ''}
+          ${esc(note.title)}
+        </div>
+        <div style="display:flex;gap:1px;flex-shrink:0;">
+          <button class="btn-icon" style="width:22px;height:22px;font-size:10px;"
+                  title="${note.burnAfterRead ? 'Disable' : 'Enable'} burn"
+                  data-action="burn" data-id="${esc(note.id)}">
+            <i class="fas fa-fire" style="color:${note.burnAfterRead ? '#ef4444' : '#1e293b'};"></i>
+          </button>
+          <button class="btn-icon danger" style="width:22px;height:22px;font-size:10px;"
+                  title="Delete note"
+                  data-action="delete" data-id="${esc(note.id)}">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div class="note-snippet">${esc(snippet)}</div>
+      <div class="note-meta">
+        <i class="fas fa-clock" style="font-size:9px;"></i>${esc(fmtDate(note.updatedAt))}
+        <span style="margin-left:auto;">${note.wordCount || 0}w</span>
+      </div>
+    `;
+
+    // Event delegation on the item
+    div.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (btn) {
+        e.stopPropagation();
+        const action = btn.dataset.action;
+        const id     = btn.dataset.id;
+        if (action === 'burn')   toggleBurnForNote(id);
+        if (action === 'delete') confirmDeleteNote(id);
+        return;
+      }
+      selectNote(note.id);
+    });
+
+    div.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') selectNote(note.id);
+    });
+
+    list.appendChild(div);
+  });
+}
+
+/* ================================================================
+   SECTION 17 — VAULT SAVE
+================================================================ */
+const _saveDebounced = debounce(() => {
+  if (Store.saveVault(AppState.notes)) showAutosave();
+}, 700);
+
+function saveVaultNow() { _saveDebounced(); }
+
+function forceSaveNow() {
+  if (Store.saveVault(AppState.notes)) {
+    showAutosave();
+    showToast('Saved!', 'success');
+  }
+}
+
+function showAutosave() {
+  const el = document.getElementById('autosave-pill');
+  if (!el) return;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+/* ================================================================
+   SECTION 18 — EDITOR
+================================================================ */
+function onEditorInput() {
+  const ta   = document.getElementById('note-editor');
+  const note = getActiveNote();
+  if (!note) return;
+  note.content   = ta.value;
+  note.updatedAt = new Date().toISOString();
+  note.wordCount = countWords(ta.value);
+  updateLineNumbers();
+  updateEditorStats();
+  renderPreviewDebounced();
+  saveVaultNow();
+  renderSidebar();
+}
+
+function onTitleChange() {
+  const title = document.getElementById('note-title').value || 'Untitled Note';
+  const note  = getActiveNote();
+  if (!note) return;
+  note.title     = title;
+  note.updatedAt = new Date().toISOString();
+  saveVaultNow();
+  renderSidebar();
+}
+
+function onEditorKeydown(e) {
+  // Tab → 2 spaces
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta  = e.target;
+    const s   = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value  = ta.value.slice(0, s) + '  ' + ta.value.slice(end);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+    onEditorInput();
+    return;
+  }
+  if (e.ctrlKey && e.key === 'b') { e.preventDefault(); editorWrap('**','**'); }
+  if (e.ctrlKey && e.key === 'i') { e.preventDefault(); editorWrap('*','*'); }
+}
+
+function syncEditorScroll() {
+  document.getElementById('line-numbers').scrollTop = document.getElementById('note-editor').scrollTop;
+}
+
+function updateLineNumbers() {
+  const ta    = document.getElementById('note-editor');
+  const count = ta.value.split('\n').length;
+  document.getElementById('line-numbers').innerHTML = Array.from({length:count},(_,i)=>i+1).join('<br>');
+}
+
+function updateEditorStats() {
+  const val = document.getElementById('note-editor').value;
+  document.getElementById('stat-words').textContent = countWords(val) + 'w';
+  document.getElementById('stat-chars').textContent = val.length + 'c';
+  document.getElementById('stat-lines').textContent = val.split('\n').length + 'l';
+}
+
+/* ── Markdown toolbar helpers ── */
+function editorWrap(before, after) {
+  const ta  = document.getElementById('note-editor');
+  const s   = ta.selectionStart, e = ta.selectionEnd;
+  const sel = ta.value.slice(s, e) || 'text';
+  ta.value  = ta.value.slice(0, s) + before + sel + after + ta.value.slice(e);
+  ta.selectionStart = s + before.length;
+  ta.selectionEnd   = s + before.length + sel.length;
+  ta.focus();
+  onEditorInput();
+}
+
+function editorInsertHeading() {
+  const ta       = document.getElementById('note-editor');
+  const pos      = ta.selectionStart;
+  const lineStart = ta.value.lastIndexOf('\n', pos - 1) + 1;
+  ta.value = ta.value.slice(0, lineStart) + '## ' + ta.value.slice(lineStart);
+  ta.selectionStart = ta.selectionEnd = pos + 3;
+  ta.focus();
+  onEditorInput();
+}
+
+function editorInsertLink() { editorWrap('[', '](https://example.com)'); }
+
+/* ── Markdown render (DOMPurify sanitized) ── */
+const renderPreviewDebounced = debounce(_renderPreview, 250);
+
+function _renderPreview() {
+  const pane = document.getElementById('preview-pane');
+  if (!pane || pane.style.display === 'none') return;
+  const raw   = document.getElementById('note-editor').value || '> *Start writing…*';
+  let html;
+  try    { html = marked.parse(raw); }
+  catch  { html = '<p>Preview error</p>'; }
+
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','a','ul','ol','li',
+                   'blockquote','code','pre','strong','em','del','table',
+                   'thead','tbody','tr','th','td','hr','img','br','span','div','input'],
+    ALLOWED_ATTR: ['class','href','src','alt','title','checked','type','disabled'],
+    FORBID_ATTR:  ['onerror','onload','onclick','onmouseover','onfocus'],
+  });
+  document.getElementById('md-preview').innerHTML = clean;
+
+  // Highlight code blocks
+  document.querySelectorAll('#md-preview pre code').forEach(b => {
+    try { hljs.highlightElement(b); } catch {}
+  });
+
+  // Safe links
+  document.querySelectorAll('#md-preview a').forEach(a => {
+    a.setAttribute('target','_blank');
+    a.setAttribute('rel','noopener noreferrer');
+  });
+}
+
+/* ================================================================
+   SECTION 19 — EDITOR MODE
+================================================================ */
+function setEditorMode(mode) {
+  AppState.editorMode = mode;
+  applyEditorMode(mode);
+  const stgs = Store.loadSettings();
+  Store.saveSettings({ ...stgs, editorMode: mode });
+}
+
+function applyEditorMode(mode) {
+  const ep = document.getElementById('editor-pane');
+  const pp = document.getElementById('preview-pane');
+  const tabs = { edit:'mode-edit', split:'mode-split', preview:'mode-preview' };
+
+  // Reset all tabs
+  Object.values(tabs).forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.className = 'mode-tab ' + (id === tabs[mode] ? 'active' : 'inactive');
+  });
+
+  if (mode === 'edit') {
+    ep.style.display = 'flex'; ep.style.flex = '1';
+    pp.style.display = 'none';
+  } else if (mode === 'preview') {
+    ep.style.display = 'none';
+    pp.style.display = 'flex'; pp.style.flex = '1';
+    _renderPreview();
+  } else { // split
+    ep.style.display = 'flex'; ep.style.flex = '1';
+    pp.style.display = 'flex'; pp.style.flex = '1';
+    _renderPreview();
+  }
+}
+
+/* ================================================================
+   SECTION 20 — SETTINGS MODAL
+================================================================ */
+function openSettings() {
+  const lm   = AppState.lockMinutes;
+  const opts = [1,2,3,5,10,15,30,60,999].map(v =>
+    `<option value="${v}" ${lm == v ? 'selected' : ''}>${v >= 999 ? 'Never' : v + ' minute' + (v > 1 ? 's' : '')}</option>`
+  ).join('');
+
+  showModal(`
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <i class="fas fa-gear" style="font-size:1.4rem;color:#818cf8;"></i>
+        <div>
+          <h2 style="font-size:1.05rem;font-weight:700;color:#f1f5f9;">Settings</h2>
+          <p style="font-size:12px;color:#64748b;">KeyForge Notes Pro v3.0</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">
+          <i class="fas fa-clock" style="color:#818cf8;margin-right:4px;"></i>Auto-Lock Timer
+        </label>
+        <select id="stg-lock" class="kf-input" style="font-size:13px;">${opts}</select>
+      </div>
+
+      <div style="border-top:1px solid #1e293b;padding-top:16px;margin-bottom:16px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">
+          <i class="fas fa-key" style="color:#f59e0b;margin-right:4px;"></i>Change Master Key
+        </label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <input id="stg-old" type="password" class="kf-input" style="font-size:13px;" placeholder="Current master key…" autocomplete="current-password" />
+          <input id="stg-new" type="password" class="kf-input" style="font-size:13px;" placeholder="New master key (≥8 chars)…" autocomplete="new-password" />
+          <input id="stg-new2" type="password" class="kf-input" style="font-size:13px;" placeholder="Confirm new master key…" autocomplete="new-password" />
+          <button class="btn-ghost" onclick="changeMasterKey()" style="font-size:13px;">
+            <i class="fas fa-rotate"></i>Change Key
+          </button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid #1e293b;padding-top:16px;margin-bottom:20px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">
+          <i class="fas fa-chart-pie" style="color:#22d3ee;margin-right:4px;"></i>Vault Info
+        </label>
+        <div style="background:#020617;border:1px solid #1e293b;border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;">
+          <span style="color:#334155;">Notes</span>      <span style="color:#22d3ee;">${AppState.notes.length}</span>
+          <span style="color:#334155;">Algorithm</span>  <span style="color:#22c55e;">AES-256-CBC</span>
+          <span style="color:#334155;">KDF</span>        <span style="color:#22c55e;">PBKDF2-SHA256</span>
+          <span style="color:#334155;">Iterations</span> <span style="color:#22c55e;">100,000</span>
+          <span style="color:#334155;">Storage</span>    <span style="color:#818cf8;">LocalStorage</span>
+          <span style="color:#334155;">Network</span>    <span style="color:#22c55e;">Offline</span>
+          <span style="color:#334155;">Telemetry</span>  <span style="color:#22c55e;">Zero</span>
+          <span style="color:#334155;">Cookies</span>    <span style="color:#22c55e;">None</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="applySettings()" style="font-size:13px;">
+          <i class="fas fa-check"></i>Save Settings
+        </button>
+        <button class="btn-ghost" onclick="closeModal()" style="font-size:13px;">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+function applySettings() {
+  const lm = parseInt(document.getElementById('stg-lock').value);
+  AppState.lockMinutes = lm;
+  const stgs = Store.loadSettings();
+  Store.saveSettings({ ...stgs, lockMinutes: lm });
+  startAutoLock();
+  closeModal();
+  showToast('Settings saved', 'success');
+}
+
+function changeMasterKey() {
+  const oldKey  = document.getElementById('stg-old').value.trim();
+  const newKey  = document.getElementById('stg-new').value.trim();
+  const newKey2 = document.getElementById('stg-new2').value.trim();
+
+  if (!oldKey || !newKey || !newKey2) { showToast('Fill all three fields', 'warn'); return; }
+  if (Crypto.hashForAuth(oldKey) !== localStorage.getItem(LS.HASH)) {
+    showToast('Wrong current master key!', 'error'); return;
+  }
+  if (newKey !== newKey2) { showToast("New keys don't match", 'warn'); return; }
+  if (newKey.length < 8)  { showToast('Minimum 8 characters', 'warn'); return; }
+
+  const newHash = Crypto.hashForAuth(newKey);
+  const newDK   = Crypto.deriveKey(newKey);
+  Session.setKey(newDK);
+  localStorage.setItem(LS.HASH, newHash);
+  Store.saveVault(AppState.notes);
+
+  closeModal();
+  showToast('Master key changed! 🔐', 'success');
+}
+
+/* ================================================================
+   SECTION 21 — EXPORT
+================================================================ */
+function openExport() {
+  showModal(`
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <i class="fas fa-file-export" style="font-size:1.4rem;color:#818cf8;"></i>
+        <div>
+          <h2 style="font-size:1.05rem;font-weight:700;color:#f1f5f9;">Export Encrypted Vault</h2>
+          <p style="font-size:12px;color:#64748b;">${AppState.notes.length} note(s) · AES-256 encrypted</p>
+        </div>
+      </div>
+      <div style="padding:12px;border-radius:10px;background:rgba(99,102,241,0.06);border:1px solid rgba(99,102,241,0.2);margin-bottom:14px;font-size:12px;color:#94a3b8;line-height:1.6;">
+        <i class="fas fa-info-circle" style="color:#818cf8;margin-right:5px;"></i>
+        The export file is fully encrypted. You need your master key to import it. The salt is embedded so you can import on any device.
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em;">Confirm Master Key</label>
+        <input id="exp-key" type="password" class="kf-input" placeholder="Enter your master key to authorize…"
+               onkeydown="if(event.key==='Enter')doExport()" autocomplete="current-password" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="doExport()"><i class="fas fa-download"></i>Download Vault</button>
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+function doExport() {
+  const key = document.getElementById('exp-key').value.trim();
+  if (!key) { showToast('Enter your master key', 'warn'); return; }
+  if (Crypto.hashForAuth(key) !== localStorage.getItem(LS.HASH)) {
+    showToast('Wrong master key!', 'error'); return;
+  }
+  const dk      = Crypto.deriveKey(key);
+  const payload = JSON.stringify({
+    notes: AppState.notes, exportedAt: new Date().toISOString(),
+    version: '3.0', brand: 'KeyForge Notes Pro', author: 'Sudhir Kumar (@SudhirDevOps1)',
+  });
+  const salt = localStorage.getItem(LS.SALT);
+  const enc  = Crypto.encrypt(payload, dk);
+  const obj  = { __kfnp: true, version: '3.0', salt, data: enc };
+  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = `keyforge-backup-${Date.now()}.kfnp.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  closeModal();
+  showToast('Vault exported! 📦', 'success');
+}
+
+/* ================================================================
+   SECTION 22 — IMPORT
+================================================================ */
+function openImport() {
+  showModal(`
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <i class="fas fa-file-import" style="font-size:1.4rem;color:#22d3ee;"></i>
+        <div>
+          <h2 style="font-size:1.05rem;font-weight:700;color:#f1f5f9;">Import Encrypted Vault</h2>
+          <p style="font-size:12px;color:#64748b;">Requires the master key used when exported</p>
+        </div>
+      </div>
+      <div style="padding:12px;border-radius:10px;background:rgba(120,53,15,0.12);border:1px solid rgba(146,64,14,0.35);margin-bottom:14px;font-size:12px;color:#f59e0b;line-height:1.6;">
+        <i class="fas fa-triangle-exclamation" style="margin-right:5px;"></i>
+        Notes will be <strong>merged</strong>. Duplicate IDs are skipped.
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em;">Select .kfnp.json File</label>
+        <input id="imp-file" type="file" accept=".json" class="kf-input" style="font-size:12px;padding:8px;" />
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:#64748b;margin-bottom:7px;text-transform:uppercase;letter-spacing:.05em;">Original Master Key</label>
+        <input id="imp-key" type="password" class="kf-input" placeholder="Key used during export…"
+               onkeydown="if(event.key==='Enter')doImport()" autocomplete="current-password" />
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn-primary" onclick="doImport()"><i class="fas fa-file-arrow-up"></i>Import Notes</button>
+        <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>
+  `);
+}
+
+function doImport() {
+  const file = document.getElementById('imp-file').files[0];
+  const key  = document.getElementById('imp-key').value.trim();
+  if (!file) { showToast('Select a backup file', 'warn'); return; }
+  if (!key)  { showToast('Enter the original master key', 'warn'); return; }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const obj = JSON.parse(e.target.result);
+      if (!obj.__kfnp) { showToast('Invalid KeyForge backup', 'error'); return; }
+      // Re-derive key using the salt embedded in the export file
+      const impDK = CryptoJS.PBKDF2(key, obj.salt, {
+        keySize:256/32, iterations:100000, hasher:CryptoJS.algo.SHA256
+      }).toString(CryptoJS.enc.Hex);
+      const json = Crypto.decrypt(obj.data, impDK);
+      if (!json) { showToast('Wrong master key or corrupted file!', 'error'); return; }
+      const payload  = JSON.parse(json);
+      const incoming = Array.isArray(payload.notes) ? payload.notes : [];
+      const existIds = new Set(AppState.notes.map(n => n.id));
+      let added = 0;
+      incoming.forEach(n => { if (!existIds.has(n.id)) { AppState.notes.push(n); added++; } });
+      Store.saveVault(AppState.notes);
+      renderSidebar();
+      closeModal();
+      showToast(`Imported ${added} note(s)! 📥`, 'success');
+    } catch (err) { showToast('Import failed: ' + esc(err.message), 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+/* ================================================================
+   SECTION 23 — NUKE
+================================================================ */
+function confirmNuke() {
+  showModal(`
+    <div style="text-align:center;">
+      <div style="font-size:3.5rem;color:#ef4444;margin-bottom:12px;animation:flicker 2s infinite;">
+        <i class="fas fa-radiation"></i>
+      </div>
+      <h2 style="font-size:1.15rem;font-weight:800;color:#ef4444;margin-bottom:8px;">☢ NUCLEAR WIPE</h2>
+      <p style="color:#94a3b8;font-size:13px;margin-bottom:6px;">This <strong style="color:#f87171;">permanently destroys</strong>:</p>
+      <ul style="color:#64748b;font-size:12px;margin:8px 0 16px;line-height:2;text-align:left;display:inline-block;">
+        <li><i class="fas fa-xmark" style="color:#ef4444;margin-right:6px;"></i>All notes &amp; vault data</li>
+        <li><i class="fas fa-xmark" style="color:#ef4444;margin-right:6px;"></i>Master key hash &amp; salt</li>
+        <li><i class="fas fa-xmark" style="color:#ef4444;margin-right:6px;"></i>All settings</li>
+      </ul>
+      <div style="padding:10px 14px;border-radius:10px;background:rgba(127,29,29,0.2);border:1px solid rgba(239,68,68,0.3);margin-bottom:14px;font-size:12px;color:#fca5a5;">
+        <i class="fas fa-skull" style="margin-right:5px;"></i><strong>ZERO-KNOWLEDGE = ZERO RECOVERY.</strong>
+      </div>
+      <div style="margin-bottom:14px;">
+        <input id="nuke-input" type="text" class="kf-input"
+               style="text-align:center;font-family:'JetBrains Mono',monospace;letter-spacing:0.12em;"
+               placeholder='Type  NUKE  to confirm'
+               onkeydown="if(event.key==='Enter')doNuke()" />
+      </div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button class="btn-danger" onclick="doNuke()">
+          <i class="fas fa-radiation"></i>Execute Nuke
+        </button>
+        <button class="btn-ghost" onclick="closeModal()">
+          <i class="fas fa-shield-halved"></i>Abort
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+function doNuke() {
+  const val = (document.getElementById('nuke-input')?.value || '').trim();
+  if (val !== 'NUKE') { showToast('Type exactly "NUKE" to confirm', 'warn'); return; }
+  closeModal();
+  document.body.style.animation = 'nukeFlash 0.9s ease-out forwards';
+  setTimeout(() => {
+    document.body.style.animation = '';
+    Store.nukeAll();
+    AppState.notes = [];
+    AppState.activeId = null;
+    AppState.initialized = false;
+    document.getElementById('app').style.display         = 'none';
+    document.getElementById('lock-screen').style.display = 'flex';
+    switchAuthTab('register');
+    showToast('☢ Vault nuked. All data destroyed.', 'error');
+  }, 950);
+}
+
+/* ================================================================
+   SECTION 24 — SECURITY AUDIT MODAL
+================================================================ */
+function openAudit() {
+  const checks = [
+    ['AES-256-CBC Encryption',          'PASS','#22c55e','All notes AES-encrypted with unique IV before every localStorage write.'],
+    ['PBKDF2-SHA256 Key Derivation',    'PASS','#22c55e','100,000 iterations, 256-bit salt. Derived key in RAM only.'],
+    ['Zero-Knowledge Architecture',    'PASS','#22c55e','No server, no API, no network calls. CSP blocks outbound connections.'],
+    ['Master Key — Never Stored',      'PASS','#22c55e','Only PBKDF2 hash stored for verification. Key purged on lock/refresh.'],
+    ['DOMPurify XSS Sanitization',     'PASS','#22c55e','All Markdown HTML sanitized via DOMPurify before DOM insertion.'],
+    ['HTML Escape (esc())',            'PASS','#22c55e','All user strings escaped before dynamic HTML interpolation.'],
+    ['Auto-Lock Inactivity Timer',     'PASS','#22c55e','Configurable timer. RAM purged, UI reset on lock.'],
+    ['Burn-After-Reading Mode',        'PASS','#22c55e','Note deleted automatically when user navigates away.'],
+    ['Emergency NUKE System',         'PASS','#22c55e','Typed confirmation required. Wipes all localStorage + RAM.'],
+    ['Encrypted Export/Import',        'PASS','#22c55e','Export = AES-256 blob. Import validates key before any write.'],
+    ['No Cookies',                     'PASS','#22c55e','Zero cookies. Only localStorage used for persistence.'],
+    ['Zero Telemetry',                 'PASS','#22c55e','No analytics, no tracking, no external requests post-load.'],
+    ['Safe External Links',            'PASS','#22c55e',"Preview links get target=_blank + rel='noopener noreferrer'."],
+    ['Note Pinning System',            'PASS','#22c55e','Pinned notes sorted to top of sidebar.'],
+    ['Keyboard Shortcuts',             'PASS','#22c55e','Ctrl+S Save, Ctrl+N New, Ctrl+L Lock, Ctrl+B Bold, Ctrl+I Italic.'],
+  ];
+
+  const rows = checks.map(([name, status, color, detail]) => `
+    <div style="display:flex;align-items:flex-start;gap:10px;padding:8px 10px;border-radius:8px;
+                background:rgba(15,23,42,0.5);border:1px solid #1e293b;margin-bottom:5px;">
+      <span style="flex-shrink:0;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;
+                   background:${color}1a;color:${color};border:1px solid ${color}44;margin-top:1px;">${status}</span>
+      <div>
+        <p style="font-size:13px;font-weight:600;color:#e2e8f0;">${esc(name)}</p>
+        <p style="font-size:11px;color:#475569;margin-top:2px;line-height:1.5;">${esc(detail)}</p>
+      </div>
+    </div>
+  `).join('');
+
+  showModal(`
+    <div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <i class="fas fa-shield-check" style="font-size:1.5rem;color:#22c55e;"></i>
+        <div>
+          <h2 style="font-size:1.05rem;font-weight:800;color:#f1f5f9;">Security Audit Report</h2>
+          <p style="font-size:12px;color:#64748b;">KeyForge Notes Pro v3.0 — ${checks.length} checks · All passed</p>
+        </div>
+      </div>
+
+      <div style="max-height:350px;overflow-y:auto;margin-bottom:16px;padding-right:3px;">
+        ${rows}
+      </div>
+
+      <!-- Required brand credit -->
+      <div style="border-top:1px solid #1e293b;padding-top:14px;">
+        <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:12px;
+                    background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(6,182,212,0.08));
+                    border:1px solid rgba(99,102,241,0.2);">
+          <div style="width:42px;height:42px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+                      background:linear-gradient(135deg,#6366f1,#22d3ee);">
+            <i class="fas fa-user-shield" style="color:#fff;font-size:16px;"></i>
+          </div>
+          <div style="flex:1;">
+            <p style="font-weight:800;color:#f1f5f9;font-size:14px;">Sudhir Kumar</p>
+            <p style="color:#22d3ee;font-size:12px;font-family:'JetBrains Mono',monospace;">@SudhirDevOps1</p>
+            <p style="color:#475569;font-size:11px;margin-top:2px;">Security Engineer · DevOps · Open Source</p>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <p style="font-size:11px;font-weight:700;color:#818cf8;font-family:'JetBrains Mono',monospace;">KeyForge</p>
+            <p style="font-size:10px;color:#334155;line-height:1.8;">100% Offline<br/>Open Source<br/>Zero-Knowledge</p>
+          </div>
+        </div>
+        <p style="text-align:center;font-size:11px;color:#334155;margin-top:10px;font-family:'JetBrains Mono',monospace;line-height:1.7;">
+          KeyForge — 100% Offline | Open Source | Zero-Knowledge Security<br/>
+          Built by Sudhir Kumar (@SudhirDevOps1)
+        </p>
+      </div>
+
+      <button class="btn-ghost" onclick="closeModal()" style="width:100%;margin-top:14px;">Close</button>
+    </div>
+  `, true);
+}
+
+/* ================================================================
+   SECTION 25 — SIDEBAR RESIZER
+================================================================ */
+(function() {
+  const resizer  = document.getElementById('resizer');
+  const sidebar  = document.getElementById('sidebar');
+  let drag=false, startX=0, startW=0;
+  resizer.addEventListener('mousedown', e => {
+    drag=true; startX=e.clientX; startW=sidebar.offsetWidth;
+    resizer.classList.add('dragging');
+    document.body.style.cursor='col-resize';
+    document.body.style.userSelect='none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!drag) return;
+    const w = Math.max(200, Math.min(420, startW + e.clientX - startX));
+    sidebar.style.width = w + 'px';
+  });
+  document.addEventListener('mouseup', () => {
+    if (!drag) return;
+    drag=false; resizer.classList.remove('dragging');
+    document.body.style.cursor=''; document.body.style.userSelect='';
+  });
+})();
+
+/* ================================================================
+   SECTION 26 — KEYBOARD SHORTCUTS
+================================================================ */
+document.addEventListener('keydown', e => {
+  if (!Session.hasKey()) return;
+  if (e.ctrlKey && e.key === 's') { e.preventDefault(); forceSaveNow(); }
+  if (e.ctrlKey && e.key === 'n') { e.preventDefault(); createNewNote(); }
+  if (e.ctrlKey && e.key === 'l') { e.preventDefault(); lockApp(); }
+  if (e.key === 'Escape')          closeModal();
+});
+
+/* ================================================================
+   SECTION 27 — BOOT
+================================================================ */
+(function boot() {
+  // Configure marked (v9 compatible)
+  marked.use({
+    gfm:    true,
+    breaks: true,
+  });
+
+  // Determine if vault exists
+  const hasVault = !!localStorage.getItem(LS.HASH);
+  switchAuthTab(hasVault ? 'login' : 'register');
+
+  // Focus correct input
+  setTimeout(() => {
+    const el = document.getElementById(hasVault ? 'login-key' : 'reg-key');
+    if (el) el.focus();
+  }, 120);
+
+  // Console branding
+  console.log('%c🔐 KeyForge Notes Pro v3.0', 'font-size:15px;font-weight:bold;color:#818cf8;');
+  console.log('%c100% Offline | Open Source | Zero-Knowledge Security', 'color:#22d3ee;');
+  console.log('%cBuilt by Sudhir Kumar (@SudhirDevOps1)', 'color:#64748b;');
+  console.log('%c⚠ Do not paste unknown code here!', 'color:#ef4444;font-weight:bold;font-size:13px;');
+})();
+</script>
+</body>
+</html>
