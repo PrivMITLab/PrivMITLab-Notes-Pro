@@ -1187,7 +1187,7 @@
                   border:1px solid rgba(99,102,241,0.3);border-radius:24px;
                   box-shadow:0 0 40px rgba(99,102,241,0.2);
                   overflow:hidden;">
-                    <img src="logo.png"
+                    <img src="C:/Users/DELL/.gemini/antigravity/brain/65518509-21b1-4ee1-9a23-b2819290572c/privmitlab_notes_icon_1773838353699.png"
                         alt="PrivMITLab Logo" style="width:100%;height:100%;object-fit:cover;" />
                 </div>
                 <h1
@@ -1354,7 +1354,7 @@
                 <span id="lock-timer">--:--</span>
             </div>
             <!-- Actions -->
-            <button class="btn-icon desktop-only" onclick="exportVault()" title="Export Vault (Master)">
+            <button class="btn-icon desktop-only" onclick="openExport()" title="Export Vault (Master)">
                 <i class="fas fa-file-export"></i>
             </button>
             <button class="btn-icon desktop-only" onclick="openImport()" title="Import Vault">
@@ -1375,8 +1375,8 @@
                 <i class="fas fa-ellipsis-vertical"></i>
             </button>
             <div id="mobile-more-menu">
-                <button class="btn-ghost" onclick="exportVault(); toggleMobileMore();"><i
-                        class="fas fa-file-export"></i> Export Vault</button>
+                <button class="btn-ghost" onclick="openExport(); toggleMobileMore();"><i class="fas fa-file-export"></i>
+                    Export Vault</button>
                 <button class="btn-ghost" onclick="openImport(); toggleMobileMore();"><i class="fas fa-file-import"></i>
                     Import Vault</button>
                 <button class="btn-ghost" onclick="openAudit(); toggleMobileMore();"><i class="fas fa-shield-check"
@@ -1667,15 +1667,17 @@
             }
 
             // Derive AES key (hex) from master key using PBKDF2
-            function deriveKey(masterKey) {
-                return CryptoJS.PBKDF2(masterKey, _getSalt(), {
+            function deriveKey(masterKey, customSalt = null) {
+                const s = customSalt || _getSalt();
+                return CryptoJS.PBKDF2(masterKey, s, {
                     keySize: KSIZE, iterations: ITERS, hasher: CryptoJS.algo.SHA256
                 }).toString(CryptoJS.enc.Hex);
             }
 
             // Create auth hash (separate salt path — for verification only)
-            function hashForAuth(masterKey) {
-                return CryptoJS.PBKDF2(masterKey, _getSalt() + '::auth::v3', {
+            function hashForAuth(masterKey, customSalt = null) {
+                const s = customSalt || _getSalt();
+                return CryptoJS.PBKDF2(masterKey, s + '::auth::v3', {
                     keySize: KSIZE, iterations: ITERS, hasher: CryptoJS.algo.SHA256
                 }).toString(CryptoJS.enc.Hex);
             }
@@ -2967,7 +2969,7 @@
             });
             const salt = localStorage.getItem(LS.SALT);
             const enc = Crypto.encrypt(payload, dk);
-            const obj = { __kfnp: true, version: '3.0', salt, data: enc };
+            const obj = { __kfnp: true, version: '4.0', salt, data: enc };
             const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
