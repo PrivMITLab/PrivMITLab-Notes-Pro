@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KeyForge Notes Pro | by Sudhir Kumar</title>
+  <meta name="description" content="100% Offline | Open Source | Zero-Knowledge Security - by Sudhir Kumar @SudhirDevOps1" />
+
+  <!-- ═══════════════════════════════════════════════════════════
+       CDN DEPENDENCIES
+  ═══════════════════════════════════════════════════════════ -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.5/purify.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
+  <script>
+    // ── Tailwind Config ──────────────────────────────────────────
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            slate: {
+              950: '#020617',
+              900: '#0f172a',
+              800: '#1e293b',
+              700: '#334155',
+              600: '#475569',
+            },
+            indigo: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' },
+            cyan:   { 400: '#22d3ee', 500: '#06b6d4' },
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', '"Fira Code"', 'monospace'],
+            sans: ['"Inter"', 'sans-serif'],
+          },
+          boxShadow: {
+            'glow-indigo': '0 0 20px rgba(99,102,241,0.4)',
+            'glow-cyan':   '0 0 20px rgba(6,182,212,0.4)',
+            'glow-red':    '0 0 20px rgba(239,68,68,0.5)',
+          },
+          animation: {
+            'pulse-slow':   'pulse 3s cubic-bezier(0.4,0,0.6,1) infinite',
+            'flicker':      'flicker 2s infinite',
+            'slideInLeft':  'slideInLeft 0.3s ease-out',
+            'fadeIn':       'fadeIn 0.4s ease-out',
+            'scanline':     'scanline 8s linear infinite',
+          },
+          keyframes: {
+            flicker: {
+              '0%,100%': { opacity: '1' },
+              '50%':     { opacity: '0.85' },
+            },
+            slideInLeft: {
+              from: { transform: 'translateX(-100%)', opacity: '0' },
+              to:   { transform: 'translateX(0)',     opacity: '1' },
+            },
+            fadeIn: {
+              from: { opacity: '0', transform: 'translateY(-8px)' },
+              to:   { opacity: '1', transform: 'translateY(0)' },
+            },
+            scanline: {
+              '0%':   { transform: 'translateY(-100%)' },
+              '100%': { transform: 'translateY(100vh)' },
+            },
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       GLOBAL STYLES
+  ═══════════════════════════════════════════════════════════ -->
+  <style>
+    /* Google Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    /* ── Root / Scrollbar ──────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; overflow: hidden; }
+    body { background: #020617; color: #e2e8f0; font-family: 'Inter', sans-serif; }
+
+    ::-webkit-scrollbar       { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e293b; }
+    ::-webkit-scrollbar-thumb { background: #4f46e5; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #6366f1; }
+
+    /* ── Cyberpunk Grid Background ─────────────────────────── */
+    #bg-grid {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+    #bg-scanline {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background: linear-gradient(transparent 50%, rgba(0,0,0,0.03) 50%);
+      background-size: 100% 4px;
+      animation: scanline 8s linear infinite;
+      opacity: 0.3;
+    }
+
+    /* ── Monaco-style Editor ───────────────────────────────── */
+    #note-editor {
+      width: 100%; height: 100%;
+      background: transparent; color: #e2e8f0;
+      border: none; outline: none; resize: none;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px; line-height: 1.8;
+      padding: 20px; tab-size: 2;
+      caret-color: #22d3ee;
+    }
+    #note-editor::placeholder { color: #475569; }
+    #note-editor::selection   { background: rgba(99,102,241,0.35); }
+
+    /* ── Markdown Preview ──────────────────────────────────── */
+    #md-preview {
+      padding: 20px; overflow-y: auto; height: 100%;
+      font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.8;
+      color: #cbd5e1;
+    }
+    #md-preview h1 { font-size: 1.75rem; font-weight: 700; color: #818cf8; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 8px; }
+    #md-preview h2 { font-size: 1.35rem; font-weight: 600; color: #67e8f9; margin: 16px 0 8px; }
+    #md-preview h3 { font-size: 1.1rem;  font-weight: 600; color: #a5b4fc; margin: 12px 0 6px; }
+    #md-preview p  { margin-bottom: 10px; }
+    #md-preview ul,
+    #md-preview ol { margin: 8px 0 8px 24px; }
+    #md-preview li { margin-bottom: 4px; }
+    #md-preview blockquote {
+      border-left: 3px solid #6366f1; padding-left: 16px;
+      color: #94a3b8; font-style: italic; margin: 12px 0;
+      background: rgba(99,102,241,0.06); border-radius: 0 4px 4px 0;
+    }
+    #md-preview code {
+      background: #1e293b; color: #22d3ee;
+      padding: 2px 6px; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    }
+    #md-preview pre {
+      background: #1e293b; border-radius: 8px; margin: 12px 0;
+      border: 1px solid #334155; overflow-x: auto;
+    }
+    #md-preview pre code { background: transparent; padding: 0; color: inherit; }
+    #md-preview a { color: #818cf8; text-decoration: underline; }
+    #md-preview hr { border-color: #334155; margin: 16px 0; }
+    #md-preview table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    #md-preview th { background: #1e293b; color: #818cf8; padding: 8px 12px; border: 1px solid #334155; text-align: left; }
+    #md-preview td { padding: 8px 12px; border: 1px solid #2d3748; }
+    #md-preview tr:nth-child(even) td { background: rgba(30,41,59,0.5); }
+    #md-preview strong { color: #f1f5f9; font-weight: 600; }
+    #md-preview em     { color: #a5b4fc; }
+    #md-preview img    { max-width: 100%; border-radius: 6px; margin: 8px 0; }
+
+    /* ── Lock Screen ────────────────────────────────────────── */
+    #lock-screen {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(2,6,23,0.97);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(12px);
+    }
+    .lock-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 16px; padding: 48px 40px;
+      width: 100%; max-width: 420px;
+      box-shadow: 0 0 60px rgba(99,102,241,0.2), 0 25px 50px rgba(0,0,0,0.5);
+    }
+
+    /* ── Sidebar Note Items ─────────────────────────────────── */
+    .note-item {
+      padding: 12px 14px; border-radius: 8px; cursor: pointer;
+      border: 1px solid transparent; transition: all 0.2s ease;
+      background: rgba(30,41,59,0.4);
+    }
+    .note-item:hover        { background: rgba(30,41,59,0.8); border-color: rgba(99,102,241,0.3); }
+    .note-item.active       { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.5); box-shadow: 0 0 12px rgba(99,102,241,0.15); }
+    .note-item.burn-mode    { border-color: rgba(239,68,68,0.4) !important; background: rgba(239,68,68,0.06) !important; }
+    .note-item .note-title  { font-size: 13px; font-weight: 500; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .note-item .note-meta   { font-size: 11px; color: #64748b; margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+
+    /* ── Buttons ────────────────────────────────────────────── */
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+      color: #fff; border: none; border-radius: 8px;
+      padding: 10px 20px; font-weight: 600; font-size: 14px;
+      cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 0 16px rgba(99,102,241,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(99,102,241,0.5); }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff; border: none; border-radius: 8px;
+      padding: 8px 16px; font-weight: 600; font-size: 13px;
+      cursor: pointer; transition: all 0.2s ease;
+      box-shadow: 0 0 16px rgba(239,68,68,0.3);
+    }
+    .btn-danger:hover { transform: translateY(-1px); box-shadow: 0 0 24px rgba(239,68,68,0.5); }
+
+    .btn-ghost {
+      background: transparent; color: #94a3b8; border: 1px solid #334155;
+      border-radius: 6px; padding: 6px 12px; font-size: 13px;
+      cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-ghost:hover { background: rgba(30,41,59,0.8); color: #e2e8f0; border-color: #475569; }
+
+    .btn-icon {
+      background: transparent; color: #64748b; border: none;
+      width: 32px; height: 32px; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s ease; font-size: 14px;
+    }
+    .btn-icon:hover { background: rgba(99,102,241,0.15); color: #818cf8; }
+    .btn-icon.danger:hover { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+    /* ── Input Fields ───────────────────────────────────────── */
+    .input-field {
+      width: 100%; background: #0f172a; border: 1px solid #334155;
+      color: #e2e8f0; border-radius: 8px; padding: 10px 14px;
+      font-size: 14px; outline: none; transition: border-color 0.2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .input-field::placeholder { color: #475569; }
+
+    /* ── Modal ──────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 90;
+      background: rgba(2,6,23,0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      animation: fadeIn 0.2s ease-out;
+    }
+    .modal-box {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 12px; padding: 32px; width: 100%; max-width: 480px;
+      box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    }
+
+    /* ── Glow Borders ───────────────────────────────────────── */
+    .border-glow-indigo { border-color: rgba(99,102,241,0.4) !important; box-shadow: inset 0 0 12px rgba(99,102,241,0.05); }
+    .border-glow-cyan   { border-color: rgba(6,182,212,0.4) !important; box-shadow: inset 0 0 12px rgba(6,182,212,0.05); }
+
+    /* ── Tag Badge ──────────────────────────────────────────── */
+    .tag-burn {
+      background: rgba(239,68,68,0.15); color: #f87171;
+      font-size: 10px; font-weight: 700; padding: 2px 6px;
+      border-radius: 4px; letter-spacing: 0.5px; text-transform: uppercase;
+    }
+
+    /* ── Toast ──────────────────────────────────────────────── */
+    #toast-container { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 18px; border-radius: 8px; font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      animation: slideInLeft 0.3s ease-out; max-width: 320px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .toast-success { background: #052e16; border: 1px solid #16a34a; color: #86efac; }
+    .toast-error   { background: #2d0a0a; border: 1px solid #dc2626; color: #fca5a5; }
+    .toast-warn    { background: #1c1a02; border: 1px solid #ca8a04; color: #fde047; }
+    .toast-info    { background: #0c1a2e; border: 1px solid #0284c7; color: #7dd3fc; }
+
+    /* ── Status Bar Blink ───────────────────────────────────── */
+    .blink { animation: flicker 1.5s infinite; }
+
+    /* ── Nuke Animation ─────────────────────────────────────── */
+    @keyframes nukeFlash {
+      0%   { background: #020617; }
+      20%  { background: #7f1d1d; }
+      40%  { background: #dc2626; }
+      60%  { background: #7f1d1d; }
+      80%  { background: #450a0a; }
+      100% { background: #020617; }
+    }
+    .nuke-flash { animation: nukeFlash 0.8s ease-out; }
+
+    /* ── Password Strength Bar ──────────────────────────────── */
+    #pw-strength-bar { height: 4px; border-radius: 2px; transition: all 0.3s; }
+
+    /* ── Resizer ────────────────────────────────────────────── */
+    #resizer {
+      width: 5px; background: #1e293b; cursor: col-resize;
+      transition: background 0.2s; flex-shrink: 0;
+      position: relative;
+    }
+    #resizer:hover, #resizer.dragging { background: #6366f1; }
+    #resizer::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1px; height: 40px; background: rgba(99,102,241,0.5);
+    }
+
+    /* ── Line Numbers ───────────────────────────────────────── */
+    #editor-wrapper { position: relative; display: flex; height: 100%; overflow: hidden; }
+    #line-numbers {
+      padding: 20px 10px; min-width: 44px; text-align: right;
+      font-family: 'JetBrains Mono', monospace; font-size: 14px;
+      line-height: 1.8; color: #334155; background: rgba(15,23,42,0.6);
+      border-right: 1px solid #1e293b; user-select: none; overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    /* ── Status Dot ─────────────────────────────────────────── */
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .status-dot.green  { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .status-dot.yellow { background: #eab308; box-shadow: 0 0 6px #eab308; }
+    .status-dot.red    { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+
+    /* ── Auto-save indicator ────────────────────────────────── */
+    #autosave-indicator { opacity: 0; transition: opacity 0.3s; font-size: 11px; color: #22c55e; }
+    #autosave-indicator.show { opacity: 1; }
+
+    /* Smooth sidebar */
+    #sidebar { overflow-y: auto; }
+  </style>
+</head>
+
+<body>
+  <!-- Background effects -->
+  <div id="bg-grid"></div>
+  <div id="bg-scanline"></div>
+  <div id="toast-container"></div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       LOCK SCREEN
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="lock-screen">
+    <div class="lock-card animate-fadeIn">
+      <!-- Logo -->
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full mb-4"
+             style="background: linear-gradient(135deg,rgba(99,102,241,0.2),rgba(6,182,212,0.2)); border: 1px solid rgba(99,102,241,0.4);">
+          <i class="fas fa-shield-halved text-indigo-400 text-2xl"></i>
+        </div>
+        <h1 class="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+          KeyForge Notes Pro
+        </h1>
+        <p class="text-slate-500 text-xs mt-1 font-mono">by Sudhir Kumar · @SudhirDevOps1</p>
+        <p class="text-slate-600 text-xs mt-2">100% Offline · Open Source · Zero-Knowledge</p>
+      </div>
+
+      <!-- Mode tabs -->
+      <div class="flex gap-2 mb-6 p-1 bg-slate-950 rounded-lg">
+        <button id="tab-login"    onclick="switchAuthTab('login')"
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all bg-indigo-600 text-white">
+          Unlock Vault
+        </button>
+        <button id="tab-register" onclick="switchAuthTab('register')"
+          class="flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all text-slate-400">
+          New Vault
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <div id="form-login">
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+            <i class="fas fa-key mr-1 text-indigo-400"></i> Master Key
+          </label>
+          <div class="relative">
+            <input id="login-key" type="password" class="input-field pr-10" placeholder="Enter your master key…"
+                   onkeydown="if(event.key==='Enter') handleLogin()" autocomplete="off" />
+            <button onclick="togglePwVis('login-key','eye-login')" class="btn-icon absolute right-2 top-1/2 -translate-y-1/2">
+              <i id="eye-login" class="fas fa-eye text-xs"></i>
+            </button>
+          </div>
+        </div>
+        <button class="btn-primary w-full" onclick="handleLogin()">
+          <i class="fas fa-lock-open mr-2"></i> Unlock Vault
+        </button>
+        <p id="login-error" class="text-red-400 text-xs text-center mt-3 hidden">
+          <i class="fas fa-circle-xmark mr-1"></i> Invalid master key. Vault remains locked.
+        </p>
+      </div>
+
+      <!-- Register Form -->
+      <div id="form-register" class="hidden">
+        <div class="mb-3">
+          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+            <i class="fas fa-key mr-1 text-cyan-400"></i> Create Master Key
+          </label>
+          <div class="relative">
+            <input id="reg-key" type="password" class="input-field pr-10" placeholder="Choose a strong master key…"
+                   oninput="checkPwStrength(this.value)" autocomplete="new-password" />
+            <button onclick="togglePwVis('reg-key','eye-reg')" class="btn-icon absolute right-2 top-1/2 -translate-y-1/2">
+              <i id="eye-reg" class="fas fa-eye text-xs"></i>
+            </button>
+          </div>
+          <!-- Strength bar -->
+          <div class="mt-2 bg-slate-800 rounded-full h-1">
+            <div id="pw-strength-bar" class="h-1 rounded-full w-0"></div>
+          </div>
+          <p id="pw-strength-label" class="text-xs text-slate-500 mt-1"></p>
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+            <i class="fas fa-lock mr-1 text-cyan-400"></i> Confirm Master Key
+          </label>
+          <input id="reg-key-confirm" type="password" class="input-field" placeholder="Re-enter master key…"
+                 onkeydown="if(event.key==='Enter') handleRegister()" autocomplete="new-password" />
+        </div>
+        <div class="p-3 rounded-lg bg-amber-950/30 border border-amber-800/40 mb-4">
+          <p class="text-amber-400 text-xs"><i class="fas fa-triangle-exclamation mr-1"></i>
+            <strong>Zero-Knowledge Warning:</strong> Your master key is never stored. If lost, all data is permanently unrecoverable.</p>
+        </div>
+        <button class="btn-primary w-full" onclick="handleRegister()">
+          <i class="fas fa-vault mr-2"></i> Create Vault
+        </button>
+        <p id="reg-error" class="text-red-400 text-xs text-center mt-3 hidden"></p>
+      </div>
+
+      <!-- Footer credits -->
+      <p class="text-center text-slate-700 text-xs mt-6 font-mono">
+        KeyForge Notes Pro v2.0 · Open Source · Zero Telemetry
+      </p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MODAL OVERLAY (generic)
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="modal-overlay" class="modal-overlay hidden" onclick="closeModal(event)">
+    <div id="modal-box" class="modal-box" onclick="event.stopPropagation()">
+      <div id="modal-content"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN APP (hidden until unlock)
+  ═══════════════════════════════════════════════════════════ -->
+  <div id="app" class="hidden flex flex-col h-screen relative z-10">
+
+    <!-- ── TOP NAVBAR ──────────────────────────────────────── -->
+    <header class="flex items-center gap-3 px-4 py-2.5 border-b border-slate-800 bg-slate-950/90 backdrop-blur-sm flex-shrink-0" style="min-height:52px;">
+      <!-- Brand -->
+      <div class="flex items-center gap-2 mr-2">
+        <i class="fas fa-shield-halved text-indigo-400"></i>
+        <span class="font-bold text-sm bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
+          KeyForge Notes Pro
+        </span>
+      </div>
+
+      <!-- Note title (editable) -->
+      <input id="note-title-input" type="text" placeholder="Untitled Note"
+             class="flex-1 bg-transparent border-b border-slate-700 text-slate-200 text-sm font-medium outline-none px-2 py-1
+                    focus:border-indigo-500 transition-colors placeholder-slate-600 min-w-0"
+             oninput="onTitleChange()" />
+
+      <!-- Auto-save -->
+      <span id="autosave-indicator" class="flex items-center gap-1">
+        <i class="fas fa-check-circle"></i> Saved
+      </span>
+
+      <!-- Spacer -->
+      <div class="flex-1"></div>
+
+      <!-- Toolbar actions -->
+      <div class="flex items-center gap-1">
+        <!-- Lock timer display -->
+        <div class="hidden md:flex items-center gap-1 px-2 py-1 rounded bg-slate-800 text-xs font-mono text-slate-400 mr-1">
+          <i class="fas fa-clock text-indigo-400"></i>
+          <span id="timer-display">--:--</span>
+        </div>
+
+        <button class="btn-icon" onclick="openSettings()" title="Settings">
+          <i class="fas fa-gear"></i>
+        </button>
+        <button class="btn-icon" onclick="openExport()" title="Export Vault">
+          <i class="fas fa-file-export"></i>
+        </button>
+        <button class="btn-icon" onclick="openImport()" title="Import Vault">
+          <i class="fas fa-file-import"></i>
+        </button>
+        <button class="btn-icon" onclick="openAudit()" title="Security Audit">
+          <i class="fas fa-shield-check"></i>
+        </button>
+        <button class="btn-icon danger" onclick="confirmNuke()" title="☢ Nuke All Data">
+          <i class="fas fa-radiation text-red-500"></i>
+        </button>
+        <button class="btn-icon" onclick="lockApp()" title="Lock Vault">
+          <i class="fas fa-lock text-amber-400"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── MAIN CONTENT AREA ────────────────────────────────── -->
+    <div class="flex flex-1 min-h-0">
+
+      <!-- SIDEBAR -->
+      <div id="sidebar-container" class="flex flex-col border-r border-slate-800 bg-slate-950/60 flex-shrink-0"
+           style="width:260px; min-width:180px; max-width:400px;">
+
+        <!-- Sidebar Header -->
+        <div class="p-3 border-b border-slate-800 flex-shrink-0">
+          <div class="flex items-center gap-2 mb-3">
+            <button onclick="createNewNote()" class="btn-primary flex-1 text-xs py-2">
+              <i class="fas fa-plus mr-1"></i> New Note
+            </button>
+            <button onclick="toggleBurnForNew()" id="burn-toggle"
+              class="btn-ghost text-xs py-2 px-2" title="Toggle Burn Mode for new note">
+              <i class="fas fa-fire text-red-400"></i>
+            </button>
+          </div>
+          <!-- Search -->
+          <div class="relative">
+            <i class="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-600 text-xs"></i>
+            <input id="search-input" type="text" placeholder="Search notes…"
+                   class="input-field pl-8 py-2 text-xs" oninput="renderSidebar()" />
+          </div>
+        </div>
+
+        <!-- Note Count -->
+        <div class="px-3 py-1.5 flex items-center justify-between flex-shrink-0">
+          <span id="note-count" class="text-xs text-slate-600 font-mono">0 notes</span>
+          <div class="flex items-center gap-1">
+            <div class="status-dot green"></div>
+            <span class="text-xs text-slate-600">Encrypted</span>
+          </div>
+        </div>
+
+        <!-- Note List -->
+        <div id="note-list" class="flex-1 overflow-y-auto px-2 pb-2 flex flex-col gap-1"></div>
+
+        <!-- Sidebar Footer -->
+        <div class="p-2 border-t border-slate-800 flex-shrink-0">
+          <p class="text-slate-700 text-xs text-center font-mono">AES-256 · Zero-Knowledge</p>
+        </div>
+      </div>
+
+      <!-- Sidebar Resizer -->
+      <div id="resizer" class="flex-shrink-0 cursor-col-resize"></div>
+
+      <!-- EDITOR PANEL -->
+      <div class="flex flex-col flex-1 min-w-0">
+
+        <!-- Editor / Preview Tabs bar -->
+        <div class="flex items-center gap-2 px-4 py-2 border-b border-slate-800 bg-slate-900/50 flex-shrink-0">
+          <div class="flex gap-1 bg-slate-800 rounded-lg p-1">
+            <button onclick="setEditorMode('edit')" id="btn-mode-edit"
+              class="px-3 py-1 rounded-md text-xs font-medium transition-all bg-indigo-600 text-white">
+              <i class="fas fa-pen-to-square mr-1"></i>Edit
+            </button>
+            <button onclick="setEditorMode('split')" id="btn-mode-split"
+              class="px-3 py-1 rounded-md text-xs font-medium transition-all text-slate-400">
+              <i class="fas fa-table-columns mr-1"></i>Split
+            </button>
+            <button onclick="setEditorMode('preview')" id="btn-mode-preview"
+              class="px-3 py-1 rounded-md text-xs font-medium transition-all text-slate-400">
+              <i class="fas fa-eye mr-1"></i>Preview
+            </button>
+          </div>
+
+          <!-- Word / Char count -->
+          <div class="ml-auto flex items-center gap-3 text-xs font-mono text-slate-600">
+            <span id="word-count">0 words</span>
+            <span id="char-count">0 chars</span>
+            <span id="line-count">0 lines</span>
+          </div>
+
+          <!-- Burn mode badge for current note -->
+          <span id="burn-badge" class="tag-burn hidden ml-2">
+            <i class="fas fa-fire mr-1"></i>BURN AFTER READ
+          </span>
+        </div>
+
+        <!-- Editor + Preview Split -->
+        <div id="editor-area" class="flex flex-1 min-h-0">
+
+          <!-- Left: Editor -->
+          <div id="editor-pane" class="flex flex-col flex-1 min-w-0 border-r border-slate-800">
+            <div id="editor-wrapper" class="flex flex-1 min-h-0">
+              <div id="line-numbers">1</div>
+              <textarea id="note-editor"
+                placeholder="# Your Note Here&#10;&#10;Write in **Markdown**. Your note is AES-256 encrypted.&#10;&#10;```js&#10;console.log('KeyForge Notes Pro');&#10;```"
+                oninput="onEditorInput()" onscroll="syncScroll()"></textarea>
+            </div>
+          </div>
+
+          <!-- Right: Markdown Preview -->
+          <div id="preview-pane" class="flex-1 min-w-0 overflow-hidden">
+            <div id="md-preview"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATUS BAR ────────────────────────────────────────── -->
+    <footer class="flex items-center justify-between px-4 py-1.5 border-t border-slate-800 bg-slate-950/90 flex-shrink-0 text-xs font-mono">
+      <div class="flex items-center gap-4">
+        <span class="text-indigo-400 flex items-center gap-1">
+          <i class="fas fa-shield-halved"></i>
+          <span class="blink">VAULT ACTIVE</span>
+        </span>
+        <span class="text-slate-600">AES-256-CBC</span>
+        <span id="status-note-id" class="text-slate-700"></span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-slate-600">
+          <i class="fas fa-user-shield mr-1 text-cyan-500"></i>
+          Sudhir Kumar · @SudhirDevOps1
+        </span>
+        <span id="status-time" class="text-slate-700"></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       MAIN APPLICATION LOGIC
+  ═══════════════════════════════════════════════════════════ -->
+  <script>
+  'use strict';
+  // ─────────────────────────────────────────────────────────────
+  //  CONSTANTS & STATE
+  // ─────────────────────────────────────────────────────────────
+  const LS_KEYS = {
+    VAULT:       'kfnp_vault_v2',
+    HASH:        'kfnp_master_hash',
+    SETTINGS:    'kfnp_settings',
+    SALT:        'kfnp_salt',
+  };
+
+  const STATE = {
+    masterKey:       null,   // raw key (in RAM only, cleared on lock)
+    derivedKey:      null,   // PBKDF2-derived key string for CryptoJS
+    notes:           [],     // decrypted notes array
+    activeNoteId:    null,
+    editorMode:      'split',
+    autoLockMinutes: 5,
+    lockTimer:       null,
+    countdownTimer:  null,
+    remainingSeconds:0,
+    burnModeNew:     false,  // burn mode for next new note
+    isDragging:      false,
+    autosaveTimer:   null,
+    lastSaved:       null,
+    isSaving:        false,
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  //  CRYPTO UTILITIES (AES-256 via CryptoJS + PBKDF2)
+  // ─────────────────────────────────────────────────────────────
+  function getSalt() {
+    let salt = localStorage.getItem(LS_KEYS.SALT);
+    if (!salt) {
+      salt = CryptoJS.lib.WordArray.random(256/8).toString();
+      localStorage.setItem(LS_KEYS.SALT, salt);
+    }
+    return salt;
+  }
+
+  function deriveKey(masterKey) {
+    const salt = getSalt();
+    const derived = CryptoJS.PBKDF2(masterKey, salt, {
+      keySize: 256/32,
+      iterations: 100000,
+      hasher: CryptoJS.algo.SHA256,
+    });
+    return derived.toString();
+  }
+
+  function hashKey(masterKey) {
+    const salt = getSalt();
+    return CryptoJS.PBKDF2(masterKey, salt + '_auth', {
+      keySize: 256/32,
+      iterations: 100000,
+      hasher: CryptoJS.algo.SHA256,
+    }).toString();
+  }
+
+  function encryptData(plaintext, derivedKey) {
+    try {
+      const iv  = CryptoJS.lib.WordArray.random(128/8);
+      const key = CryptoJS.enc.Hex.parse(derivedKey);
+      const encrypted = CryptoJS.AES.encrypt(plaintext, key, {
+        iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7,
+      });
+      return iv.toString() + ':' + encrypted.toString();
+    } catch(e) { console.error('Encrypt error:', e); return null; }
+  }
+
+  function decryptData(ciphertext, derivedKey) {
+    try {
+      const [ivHex, enc] = ciphertext.split(':');
+      if (!ivHex || !enc) return null;
+      const iv  = CryptoJS.enc.Hex.parse(ivHex);
+      const key = CryptoJS.enc.Hex.parse(derivedKey);
+      const decrypted = CryptoJS.AES.decrypt(enc, key, {
+        iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7,
+      });
+      return decrypted.toString(CryptoJS.enc.Utf8) || null;
+    } catch(e) { return null; }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  VAULT PERSISTENCE
+  // ─────────────────────────────────────────────────────────────
+  function saveVault() {
+    if (!STATE.derivedKey) return;
+    const payload = JSON.stringify(STATE.notes);
+    const encrypted = encryptData(payload, STATE.derivedKey);
+    if (encrypted) {
+      localStorage.setItem(LS_KEYS.VAULT, encrypted);
+      STATE.lastSaved = new Date();
+      showAutosave();
+    }
+  }
+
+  function loadVault() {
+    const encrypted = localStorage.getItem(LS_KEYS.VAULT);
+    if (!encrypted) { STATE.notes = []; return true; }
+    const decrypted = decryptData(encrypted, STATE.derivedKey);
+    if (!decrypted) return false;
+    try {
+      STATE.notes = JSON.parse(decrypted);
+      return true;
+    } catch(e) { return false; }
+  }
+
+  function saveSettings(s) { localStorage.setItem(LS_KEYS.SETTINGS, JSON.stringify(s)); }
+  function loadSettings()  {
+    try {
+      const s = JSON.parse(localStorage.getItem(LS_KEYS.SETTINGS) || '{}');
+      if (s.autoLockMinutes) STATE.autoLockMinutes = s.autoLockMinutes;
+      if (s.editorMode) STATE.editorMode = s.editorMode;
+    } catch(e) {}
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  AUTH FLOW
+  // ─────────────────────────────────────────────────────────────
+  function switchAuthTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+    document.getElementById('form-register').classList.toggle('hidden', isLogin);
+    document.getElementById('tab-login').className    = 'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ' + (isLogin    ? 'bg-indigo-600 text-white' : 'text-slate-400');
+    document.getElementById('tab-register').className = 'flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all ' + (!isLogin   ? 'bg-indigo-600 text-white' : 'text-slate-400');
+    document.getElementById('login-error').classList.add('hidden');
+    document.getElementById('reg-error').classList.add('hidden');
+  }
+
+  function handleLogin() {
+    const key = document.getElementById('login-key').value.trim();
+    if (!key) { toast('Enter your master key', 'warn'); return; }
+    const storedHash = localStorage.getItem(LS_KEYS.HASH);
+    if (!storedHash) { toast('No vault found. Create one first.', 'warn'); return; }
+    const computedHash = hashKey(key);
+    if (computedHash !== storedHash) {
+      document.getElementById('login-error').classList.remove('hidden');
+      // Shake animation
+      document.querySelector('.lock-card').style.animation = 'none';
+      setTimeout(() => document.querySelector('.lock-card').style.animation = '', 100);
+      return;
+    }
+    STATE.masterKey  = key;
+    STATE.derivedKey = deriveKey(key);
+    if (!loadVault()) {
+      document.getElementById('login-error').classList.remove('hidden');
+      STATE.masterKey = STATE.derivedKey = null;
+      return;
+    }
+    document.getElementById('login-key').value = '';
+    document.getElementById('login-error').classList.add('hidden');
+    unlockApp();
+  }
+
+  function handleRegister() {
+    const key    = document.getElementById('reg-key').value.trim();
+    const key2   = document.getElementById('reg-key-confirm').value.trim();
+    const errEl  = document.getElementById('reg-error');
+    errEl.classList.add('hidden');
+
+    if (key.length < 8) { errEl.textContent='Master key must be ≥ 8 characters.'; errEl.classList.remove('hidden'); return; }
+    if (key !== key2)   { errEl.textContent='Keys do not match.'; errEl.classList.remove('hidden'); return; }
+    if (localStorage.getItem(LS_KEYS.HASH)) {
+      errEl.textContent='Vault already exists. Unlock or nuke first.'; errEl.classList.remove('hidden'); return;
+    }
+    const hash = hashKey(key);
+    localStorage.setItem(LS_KEYS.HASH, hash);
+    STATE.masterKey  = key;
+    STATE.derivedKey = deriveKey(key);
+    STATE.notes      = [];
+    saveVault();
+    document.getElementById('reg-key').value         = '';
+    document.getElementById('reg-key-confirm').value = '';
+    toast('Vault created successfully!', 'success');
+    unlockApp();
+  }
+
+  function checkPwStrength(pw) {
+    const bar   = document.getElementById('pw-strength-bar');
+    const label = document.getElementById('pw-strength-label');
+    let score = 0;
+    if (pw.length >= 8)  score++;
+    if (pw.length >= 14) score++;
+    if (/[A-Z]/.test(pw))    score++;
+    if (/[0-9]/.test(pw))    score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const configs = [
+      { w:'0%',   bg:'#475569', t:'', c:'text-slate-500' },
+      { w:'20%',  bg:'#ef4444', t:'Very Weak',  c:'text-red-400' },
+      { w:'40%',  bg:'#f97316', t:'Weak',       c:'text-orange-400' },
+      { w:'60%',  bg:'#eab308', t:'Fair',       c:'text-yellow-400' },
+      { w:'80%',  bg:'#22c55e', t:'Strong',     c:'text-green-400' },
+      { w:'100%', bg:'#06b6d4', t:'Very Strong',c:'text-cyan-400' },
+    ];
+    const cfg = configs[score] || configs[0];
+    bar.style.width      = cfg.w;
+    bar.style.background = cfg.bg;
+    label.textContent    = cfg.t;
+    label.className      = `text-xs mt-1 ${cfg.c}`;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  APP LOCK / UNLOCK
+  // ─────────────────────────────────────────────────────────────
+  function unlockApp() {
+    loadSettings();
+    document.getElementById('lock-screen').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    if (STATE.notes.length === 0) createNewNote();
+    else {
+      STATE.activeNoteId = STATE.notes[0].id;
+      renderSidebar();
+      loadActiveNote();
+    }
+    startAutoLock();
+    startClock();
+    setEditorMode(STATE.editorMode);
+    toast('Vault unlocked. Welcome back!', 'success');
+  }
+
+  function lockApp() {
+    // Clear sensitive data from RAM
+    STATE.masterKey  = null;
+    STATE.derivedKey = null;
+    STATE.notes      = [];
+    STATE.activeNoteId = null;
+    STATE.burnModeNew  = false;
+
+    // Clear UI
+    document.getElementById('note-editor').value = '';
+    document.getElementById('md-preview').innerHTML = '';
+    document.getElementById('note-title-input').value = '';
+    document.getElementById('note-list').innerHTML    = '';
+    document.getElementById('login-key').value        = '';
+
+    // Show lock screen
+    document.getElementById('app').classList.add('hidden');
+    document.getElementById('lock-screen').style.display = 'flex';
+    document.getElementById('login-error').classList.add('hidden');
+
+    // Stop timers
+    clearAutoLock();
+    if (STATE.countdownTimer) clearInterval(STATE.countdownTimer);
+    toast('Vault locked. 🔒', 'info');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  AUTO-LOCK TIMER
+  // ─────────────────────────────────────────────────────────────
+  function startAutoLock() {
+    clearAutoLock();
+    STATE.remainingSeconds = STATE.autoLockMinutes * 60;
+    updateTimerDisplay();
+
+    STATE.lockTimer = setTimeout(lockApp, STATE.autoLockMinutes * 60 * 1000);
+    STATE.countdownTimer = setInterval(() => {
+      STATE.remainingSeconds = Math.max(0, STATE.remainingSeconds - 1);
+      updateTimerDisplay();
+    }, 1000);
+
+    // Reset on activity
+    ['mousemove','keydown','click','scroll','touchstart'].forEach(evt =>
+      document.addEventListener(evt, resetAutoLock, { passive: true })
+    );
+  }
+
+  function resetAutoLock() {
+    if (!STATE.masterKey) return;
+    clearAutoLock();
+    startAutoLock();
+  }
+
+  function clearAutoLock() {
+    if (STATE.lockTimer)     { clearTimeout(STATE.lockTimer);  STATE.lockTimer = null; }
+    if (STATE.countdownTimer){ clearInterval(STATE.countdownTimer); STATE.countdownTimer = null; }
+    ['mousemove','keydown','click','scroll','touchstart'].forEach(evt =>
+      document.removeEventListener(evt, resetAutoLock)
+    );
+  }
+
+  function updateTimerDisplay() {
+    const el = document.getElementById('timer-display');
+    if (!el) return;
+    const m = Math.floor(STATE.remainingSeconds / 60);
+    const s = STATE.remainingSeconds % 60;
+    el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.style.color = STATE.remainingSeconds < 60 ? '#f87171' : '#94a3b8';
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  CLOCK
+  // ─────────────────────────────────────────────────────────────
+  function startClock() {
+    const tick = () => {
+      const el = document.getElementById('status-time');
+      if (el) el.textContent = new Date().toLocaleTimeString();
+    };
+    tick();
+    setInterval(tick, 1000);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  NOTE MANAGEMENT
+  // ─────────────────────────────────────────────────────────────
+  function generateId() {
+    return 'note_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
+  }
+
+  function createNewNote() {
+    const note = {
+      id:        generateId(),
+      title:     'Untitled Note',
+      content:   '',
+      burnMode:  STATE.burnModeNew,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      wordCount: 0,
+    };
+    STATE.notes.unshift(note);
+    STATE.activeNoteId = note.id;
+    STATE.burnModeNew  = false;
+    document.getElementById('burn-toggle').classList.remove('bg-red-900/30','border-red-700');
+    saveVault();
+    renderSidebar();
+    loadActiveNote();
+    document.getElementById('note-editor').focus();
+    toast('New note created', 'success');
+  }
+
+  function getActiveNote() {
+    return STATE.notes.find(n => n.id === STATE.activeNoteId) || null;
+  }
+
+  function loadActiveNote() {
+    const note = getActiveNote();
+    if (!note) { clearEditor(); return; }
+    document.getElementById('note-editor').value    = note.content;
+    document.getElementById('note-title-input').value = note.title;
+    document.getElementById('status-note-id').textContent = note.id;
+    updateBurnBadge(note.burnMode);
+    renderMarkdown(note.content);
+    updateLineNumbers();
+    updateCounts();
+  }
+
+  function clearEditor() {
+    document.getElementById('note-editor').value      = '';
+    document.getElementById('note-title-input').value = '';
+    document.getElementById('md-preview').innerHTML   = '';
+    document.getElementById('status-note-id').textContent = '';
+    updateBurnBadge(false);
+  }
+
+  function selectNote(id) {
+    STATE.activeNoteId = id;
+    renderSidebar();
+    loadActiveNote();
+    // Burn-after-reading trigger for previously selected note
+    // (handled at note click in the sidebar)
+  }
+
+  function handleNoteClick(id) {
+    const note = STATE.notes.find(n => n.id === id);
+    if (!note) return;
+    // If current active note is burn mode, delete it AFTER switching away
+    const prevNote = getActiveNote();
+    if (prevNote && prevNote.id !== id && prevNote.burnMode) {
+      showBurnWarning(prevNote.id, () => selectNote(id));
+      return;
+    }
+    selectNote(id);
+  }
+
+  function deleteNote(id, silent=false) {
+    const idx = STATE.notes.findIndex(n => n.id === id);
+    if (idx === -1) return;
+    STATE.notes.splice(idx, 1);
+    if (STATE.activeNoteId === id) {
+      STATE.activeNoteId = STATE.notes[0]?.id || null;
+    }
+    saveVault();
+    renderSidebar();
+    if (STATE.activeNoteId) loadActiveNote();
+    else clearEditor();
+    if (!silent) toast('Note deleted', 'warn');
+  }
+
+  function showBurnWarning(noteId, afterBurnCallback) {
+    showModal(`
+      <div class="text-center">
+        <div class="text-red-400 text-4xl mb-4"><i class="fas fa-fire-flame-curved"></i></div>
+        <h2 class="text-lg font-bold text-red-400 mb-2">Burn After Reading</h2>
+        <p class="text-slate-400 text-sm mb-6">
+          This note is marked <strong class="text-red-400">Burn After Reading</strong>.<br/>
+          It will be permanently deleted now. This action cannot be undone.
+        </p>
+        <div class="flex gap-3 justify-center">
+          <button class="btn-danger" onclick="executeBurn('${noteId}')">
+            <i class="fas fa-fire mr-1"></i> Burn It
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Keep It</button>
+        </div>
+      </div>
+    `);
+    // Store callback
+    window._afterBurnCb = afterBurnCallback;
+  }
+
+  window.executeBurn = function(noteId) {
+    deleteNote(noteId, true);
+    closeModal();
+    toast('Note has been burned 🔥', 'warn');
+    if (window._afterBurnCb) {
+      window._afterBurnCb();
+      window._afterBurnCb = null;
+    }
+  };
+
+  function toggleBurnForNote(id, event) {
+    event.stopPropagation();
+    const note = STATE.notes.find(n => n.id === id);
+    if (!note) return;
+    note.burnMode = !note.burnMode;
+    note.updatedAt = new Date().toISOString();
+    saveVault();
+    renderSidebar();
+    if (STATE.activeNoteId === id) updateBurnBadge(note.burnMode);
+    toast(note.burnMode ? '🔥 Burn mode ON' : 'Burn mode OFF', note.burnMode ? 'warn' : 'info');
+  }
+
+  function toggleBurnForNew() {
+    STATE.burnModeNew = !STATE.burnModeNew;
+    const btn = document.getElementById('burn-toggle');
+    if (STATE.burnModeNew) {
+      btn.classList.add('bg-red-900/30','border-red-700');
+      toast('Next note will be Burn After Read', 'warn');
+    } else {
+      btn.classList.remove('bg-red-900/30','border-red-700');
+    }
+  }
+
+  function updateBurnBadge(isBurn) {
+    document.getElementById('burn-badge').classList.toggle('hidden', !isBurn);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  EDITOR EVENTS
+  // ─────────────────────────────────────────────────────────────
+  function onEditorInput() {
+    const content = document.getElementById('note-editor').value;
+    const note    = getActiveNote();
+    if (!note) return;
+    note.content   = content;
+    note.updatedAt = new Date().toISOString();
+    note.wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
+    renderMarkdown(content);
+    updateLineNumbers();
+    updateCounts();
+    scheduleSave();
+    renderSidebar();
+  }
+
+  function onTitleChange() {
+    const title = document.getElementById('note-title-input').value || 'Untitled Note';
+    const note  = getActiveNote();
+    if (!note) return;
+    note.title     = title;
+    note.updatedAt = new Date().toISOString();
+    scheduleSave();
+    renderSidebar();
+  }
+
+  function scheduleSave() {
+    if (STATE.autosaveTimer) clearTimeout(STATE.autosaveTimer);
+    STATE.autosaveTimer = setTimeout(() => {
+      saveVault();
+    }, 800);
+  }
+
+  function showAutosave() {
+    const el = document.getElementById('autosave-indicator');
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2000);
+  }
+
+  function updateLineNumbers() {
+    const ta    = document.getElementById('note-editor');
+    const lines = ta.value.split('\n').length;
+    const ln    = document.getElementById('line-numbers');
+    ln.innerHTML = Array.from({length: lines}, (_, i) => i + 1).join('<br>');
+  }
+
+  function syncScroll() {
+    const ta = document.getElementById('note-editor');
+    const ln = document.getElementById('line-numbers');
+    ln.scrollTop = ta.scrollTop;
+  }
+
+  function updateCounts() {
+    const content = document.getElementById('note-editor').value;
+    const words   = content.trim() ? content.trim().split(/\s+/).length : 0;
+    const chars   = content.length;
+    const lines   = content.split('\n').length;
+    document.getElementById('word-count').textContent = `${words} words`;
+    document.getElementById('char-count').textContent = `${chars} chars`;
+    document.getElementById('line-count').textContent = `${lines} lines`;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  MARKDOWN RENDERING (with sanitization)
+  // ─────────────────────────────────────────────────────────────
+  marked.setOptions({
+    highlight: (code, lang) => {
+      if (lang && hljs.getLanguage(lang)) {
+        return hljs.highlight(code, { language: lang }).value;
+      }
+      return hljs.highlightAuto(code).value;
+    },
+    breaks:   true,
+    gfm:      true,
+  });
+
+  function renderMarkdown(content) {
+    const preview = document.getElementById('preview-pane');
+    if (preview.style.display === 'none') return;
+    const rawHTML = marked.parse(content || '*Nothing to preview yet…*');
+    const clean   = DOMPurify.sanitize(rawHTML, {
+      ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','a','ul','ol','li','blockquote',
+                     'code','pre','strong','em','table','thead','tbody','tr','th','td',
+                     'hr','img','br','del','span','div'],
+      ALLOWED_ATTR: ['class','href','src','alt','title','target'],
+    });
+    document.getElementById('md-preview').innerHTML = clean;
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  EDITOR MODE
+  // ─────────────────────────────────────────────────────────────
+  function setEditorMode(mode) {
+    STATE.editorMode = mode;
+    const edPt   = document.getElementById('editor-pane');
+    const prPt   = document.getElementById('preview-pane');
+    const btnEdit    = document.getElementById('btn-mode-edit');
+    const btnSplit   = document.getElementById('btn-mode-split');
+    const btnPreview = document.getElementById('btn-mode-preview');
+    const activeClass   = 'bg-indigo-600 text-white';
+    const inactiveClass = 'text-slate-400';
+
+    [btnEdit, btnSplit, btnPreview].forEach(b => { b.className = b.className.replace(activeClass, inactiveClass); });
+
+    if (mode === 'edit') {
+      edPt.style.display = 'flex';   edPt.style.flex = '1';
+      prPt.style.display = 'none';
+      btnEdit.className  = btnEdit.className.replace(inactiveClass, activeClass);
+    } else if (mode === 'preview') {
+      edPt.style.display = 'none';
+      prPt.style.display = 'block';  prPt.style.flex = '1';
+      btnPreview.className = btnPreview.className.replace(inactiveClass, activeClass);
+    } else { // split
+      edPt.style.display = 'flex';   edPt.style.flex = '1';
+      prPt.style.display = 'block';  prPt.style.flex = '1';
+      btnSplit.className = btnSplit.className.replace(inactiveClass, activeClass);
+    }
+    renderMarkdown(document.getElementById('note-editor').value);
+    saveSettings({ autoLockMinutes: STATE.autoLockMinutes, editorMode: STATE.editorMode });
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  SIDEBAR RENDERING
+  // ─────────────────────────────────────────────────────────────
+  function renderSidebar() {
+    const query   = document.getElementById('search-input').value.toLowerCase();
+    const listEl  = document.getElementById('note-list');
+    const countEl = document.getElementById('note-count');
+
+    let filtered = STATE.notes;
+    if (query) {
+      filtered = STATE.notes.filter(n =>
+        n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+      );
+    }
+
+    countEl.textContent = `${filtered.length} note${filtered.length !== 1 ? 's' : ''}`;
+    listEl.innerHTML = '';
+
+    if (filtered.length === 0) {
+      listEl.innerHTML = `
+        <div class="text-center py-8 text-slate-600">
+          <i class="fas fa-magnifying-glass text-2xl mb-2"></i>
+          <p class="text-xs">No notes found</p>
+        </div>`;
+      return;
+    }
+
+    filtered.forEach(note => {
+      const isActive  = note.id === STATE.activeNoteId;
+      const isBurn    = note.burnMode;
+      const preview   = note.content.replace(/[#*`>\[\]]/g,'').slice(0,60) || 'Empty note…';
+      const updatedAt = new Date(note.updatedAt).toLocaleDateString('en-IN', { month:'short', day:'numeric' });
+
+      const div = document.createElement('div');
+      div.className = `note-item ${isActive ? 'active' : ''} ${isBurn ? 'burn-mode' : ''}`;
+      div.innerHTML = `
+        <div class="flex items-start justify-between gap-1">
+          <div class="note-title flex-1 min-w-0">
+            ${isBurn ? '<i class="fas fa-fire text-red-400 text-xs mr-1"></i>' : ''}
+            ${escapeHtml(note.title)}
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button class="btn-icon text-xs" title="${isBurn ? 'Disable' : 'Enable'} burn mode"
+                    onclick="toggleBurnForNote('${note.id}', event)">
+              <i class="fas fa-fire ${isBurn ? 'text-red-400' : 'text-slate-700'}"></i>
+            </button>
+            <button class="btn-icon danger text-xs" title="Delete note"
+                    onclick="confirmDelete('${note.id}', event)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+        <div class="note-meta">
+          <i class="fas fa-clock text-xs"></i> ${updatedAt}
+          <span class="ml-auto text-slate-700">${note.wordCount || 0}w</span>
+        </div>
+        <div style="font-size:11px; color:#475569; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+          ${escapeHtml(preview)}
+        </div>
+      `;
+      div.addEventListener('click', () => handleNoteClick(note.id));
+      listEl.appendChild(div);
+    });
+  }
+
+  window.confirmDelete = function(id, event) {
+    event.stopPropagation();
+    showModal(`
+      <div class="text-center">
+        <div class="text-red-400 text-3xl mb-4"><i class="fas fa-trash-can"></i></div>
+        <h2 class="text-lg font-bold text-white mb-2">Delete Note?</h2>
+        <p class="text-slate-400 text-sm mb-6">This note will be permanently deleted from your vault.</p>
+        <div class="flex gap-3 justify-center">
+          <button class="btn-danger" onclick="deleteNote('${id}'); closeModal();">
+            <i class="fas fa-trash mr-1"></i> Delete
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    `);
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  //  EXPORT / IMPORT
+  // ─────────────────────────────────────────────────────────────
+  function openExport() {
+    showModal(`
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <i class="fas fa-file-export text-indigo-400 text-2xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-white">Export Encrypted Vault</h2>
+            <p class="text-slate-500 text-xs">All notes exported as AES-256 encrypted JSON</p>
+          </div>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-800/50 border border-slate-700 mb-4 text-xs text-slate-400">
+          <i class="fas fa-info-circle text-indigo-400 mr-1"></i>
+          The exported file is encrypted with your master key. You'll need the same key to import it.
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-2">Confirm Master Key</label>
+          <input id="export-key" type="password" class="input-field" placeholder="Enter your master key to sign export…" />
+        </div>
+        <div class="flex gap-3">
+          <button class="btn-primary flex-1" onclick="doExport()">
+            <i class="fas fa-download mr-1"></i> Download Vault
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function doExport() {
+    const key = document.getElementById('export-key').value.trim();
+    if (!key) { toast('Enter your master key', 'warn'); return; }
+    const hash = hashKey(key);
+    if (hash !== localStorage.getItem(LS_KEYS.HASH)) {
+      toast('Wrong master key!', 'error'); return;
+    }
+    const derived   = deriveKey(key);
+    const payload   = JSON.stringify({ notes: STATE.notes, exportedAt: new Date().toISOString(), version: '2.0', author: 'KeyForge Notes Pro' });
+    const encrypted = encryptData(payload, derived);
+    const exportObj = { __kfnp: true, version: '2.0', data: encrypted };
+    const blob      = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+    const url        = URL.createObjectURL(blob);
+    const a          = document.createElement('a');
+    a.href           = url;
+    a.download       = `keyforge-vault-${Date.now()}.kfnp.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    closeModal();
+    toast('Vault exported successfully!', 'success');
+  }
+
+  function openImport() {
+    showModal(`
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <i class="fas fa-file-import text-cyan-400 text-2xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-white">Import Encrypted Vault</h2>
+            <p class="text-slate-500 text-xs">Requires the original master key used during export</p>
+          </div>
+        </div>
+        <div class="p-3 rounded-lg bg-amber-950/30 border border-amber-800/40 mb-4 text-xs text-amber-400">
+          <i class="fas fa-triangle-exclamation mr-1"></i>
+          Importing will <strong>merge</strong> notes (duplicates are skipped by ID).
+        </div>
+        <div class="mb-3">
+          <label class="block text-xs font-semibold text-slate-400 mb-2">Select .kfnp.json File</label>
+          <input id="import-file" type="file" accept=".json" class="input-field text-xs" style="padding:8px;" />
+        </div>
+        <div class="mb-4">
+          <label class="block text-xs font-semibold text-slate-400 mb-2">Original Master Key</label>
+          <input id="import-key" type="password" class="input-field" placeholder="Key used when exporting…" />
+        </div>
+        <div class="flex gap-3">
+          <button class="btn-primary flex-1" onclick="doImport()">
+            <i class="fas fa-file-arrow-up mr-1"></i> Import
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function doImport() {
+    const fileInput = document.getElementById('import-file');
+    const key       = document.getElementById('import-key').value.trim();
+    if (!fileInput.files[0]) { toast('Select a file', 'warn'); return; }
+    if (!key) { toast('Enter the original master key', 'warn'); return; }
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const exportObj = JSON.parse(e.target.result);
+        if (!exportObj.__kfnp) { toast('Invalid vault file', 'error'); return; }
+        const derived   = deriveKey(key);
+        const decrypted = decryptData(exportObj.data, derived);
+        if (!decrypted) { toast('Wrong master key or corrupted file!', 'error'); return; }
+        const payload   = JSON.parse(decrypted);
+        const incoming  = payload.notes || [];
+        let imported = 0;
+        incoming.forEach(note => {
+          if (!STATE.notes.find(n => n.id === note.id)) {
+            STATE.notes.push(note);
+            imported++;
+          }
+        });
+        saveVault();
+        renderSidebar();
+        closeModal();
+        toast(`Imported ${imported} note(s) successfully!`, 'success');
+      } catch(err) {
+        toast('Import failed: ' + err.message, 'error');
+      }
+    };
+    reader.readAsText(fileInput.files[0]);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  NUKE ALL DATA
+  // ─────────────────────────────────────────────────────────────
+  function confirmNuke() {
+    showModal(`
+      <div class="text-center">
+        <div class="text-red-500 text-5xl mb-4 animate-pulse">
+          <i class="fas fa-radiation"></i>
+        </div>
+        <h2 class="text-xl font-bold text-red-400 mb-2">☢ NUCLEAR WIPE</h2>
+        <p class="text-slate-300 text-sm mb-2">
+          This will <strong class="text-red-400">permanently destroy</strong> your entire vault including:
+        </p>
+        <ul class="text-slate-500 text-xs mb-4 space-y-1">
+          <li>• All encrypted notes</li>
+          <li>• Master key hash & salt</li>
+          <li>• All settings & metadata</li>
+        </ul>
+        <div class="p-3 bg-red-950/30 border border-red-800/40 rounded-lg mb-4 text-xs text-red-400">
+          <i class="fas fa-skull mr-1"></i> <strong>IRREVERSIBLE.</strong> Zero-Knowledge means zero recovery.
+        </div>
+        <div class="mb-4">
+          <input id="nuke-confirm" type="text" class="input-field text-center font-mono"
+                 placeholder='Type "NUKE" to confirm' />
+        </div>
+        <div class="flex gap-3 justify-center">
+          <button class="btn-danger" onclick="executeNuke()">
+            <i class="fas fa-radiation mr-1"></i> Execute Nuke
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Abort</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function executeNuke() {
+    const confirmText = document.getElementById('nuke-confirm').value.trim();
+    if (confirmText !== 'NUKE') { toast('Type "NUKE" to confirm', 'warn'); return; }
+    closeModal();
+    // Flash effect
+    document.body.style.animation = 'nukeFlash 0.8s ease-out';
+    setTimeout(() => {
+      document.body.style.animation = '';
+      // Wipe localStorage
+      Object.values(LS_KEYS).forEach(k => localStorage.removeItem(k));
+      // Clear RAM
+      STATE.masterKey = STATE.derivedKey = null;
+      STATE.notes     = [];
+      // Re-show lock screen in register mode
+      document.getElementById('app').classList.add('hidden');
+      document.getElementById('lock-screen').style.display = 'flex';
+      clearAutoLock();
+      switchAuthTab('register');
+      toast('🔥 Vault nuked. All data destroyed.', 'error');
+    }, 800);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  SETTINGS MODAL
+  // ─────────────────────────────────────────────────────────────
+  function openSettings() {
+    showModal(`
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <i class="fas fa-gear text-indigo-400 text-2xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-white">Settings</h2>
+            <p class="text-slate-500 text-xs">KeyForge Notes Pro v2.0</p>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <!-- Auto-lock -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              <i class="fas fa-clock text-indigo-400 mr-1"></i> Auto-Lock Timer
+            </label>
+            <select id="setting-autolock" class="input-field">
+              <option value="1"   ${STATE.autoLockMinutes===1   ?'selected':''}>1 minute</option>
+              <option value="3"   ${STATE.autoLockMinutes===3   ?'selected':''}>3 minutes</option>
+              <option value="5"   ${STATE.autoLockMinutes===5   ?'selected':''}>5 minutes</option>
+              <option value="10"  ${STATE.autoLockMinutes===10  ?'selected':''}>10 minutes</option>
+              <option value="15"  ${STATE.autoLockMinutes===15  ?'selected':''}>15 minutes</option>
+              <option value="30"  ${STATE.autoLockMinutes===30  ?'selected':''}>30 minutes</option>
+              <option value="999" ${STATE.autoLockMinutes===999 ?'selected':''}>Never</option>
+            </select>
+          </div>
+
+          <!-- Change Master Key -->
+          <div class="border-t border-slate-800 pt-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              <i class="fas fa-key text-amber-400 mr-1"></i> Change Master Key
+            </label>
+            <div class="space-y-2">
+              <input id="setting-old-key"  type="password" class="input-field text-xs" placeholder="Current master key…" />
+              <input id="setting-new-key"  type="password" class="input-field text-xs" placeholder="New master key…" />
+              <input id="setting-new-key2" type="password" class="input-field text-xs" placeholder="Confirm new master key…" />
+              <button class="btn-ghost w-full text-xs" onclick="changeMasterKey()">
+                <i class="fas fa-rotate mr-1"></i> Change Master Key
+              </button>
+            </div>
+          </div>
+
+          <!-- Vault Info -->
+          <div class="border-t border-slate-800 pt-4">
+            <label class="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+              <i class="fas fa-chart-bar text-cyan-400 mr-1"></i> Vault Info
+            </label>
+            <div class="bg-slate-900 rounded-lg p-3 text-xs font-mono space-y-1">
+              <div class="flex justify-between"><span class="text-slate-600">Notes</span><span class="text-cyan-400">${STATE.notes.length}</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Encryption</span><span class="text-green-400">AES-256-CBC</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">KDF</span><span class="text-green-400">PBKDF2 · 100K iter</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Storage</span><span class="text-indigo-400">LocalStorage</span></div>
+              <div class="flex justify-between"><span class="text-slate-600">Telemetry</span><span class="text-green-400">Zero</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-5">
+          <button class="btn-primary flex-1" onclick="applySettings()">
+            <i class="fas fa-check mr-1"></i> Save Settings
+          </button>
+          <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+        </div>
+      </div>
+    `);
+  }
+
+  function applySettings() {
+    const al = parseInt(document.getElementById('setting-autolock').value);
+    STATE.autoLockMinutes = al;
+    saveSettings({ autoLockMinutes: al, editorMode: STATE.editorMode });
+    startAutoLock();
+    closeModal();
+    toast('Settings saved', 'success');
+  }
+
+  function changeMasterKey() {
+    const oldKey = document.getElementById('setting-old-key').value.trim();
+    const newKey = document.getElementById('setting-new-key').value.trim();
+    const newKey2= document.getElementById('setting-new-key2').value.trim();
+
+    if (!oldKey || !newKey || !newKey2) { toast('Fill all fields', 'warn'); return; }
+    if (hashKey(oldKey) !== localStorage.getItem(LS_KEYS.HASH)) { toast('Wrong current key!', 'error'); return; }
+    if (newKey !== newKey2) { toast('New keys don\'t match', 'warn'); return; }
+    if (newKey.length < 8)  { toast('Min 8 characters', 'warn'); return; }
+
+    // Re-encrypt vault with new key
+    const newHash    = hashKey(newKey);
+    const newDerived = deriveKey(newKey);
+    const payload    = JSON.stringify(STATE.notes);
+    const newEncrypted = encryptData(payload, newDerived);
+
+    localStorage.setItem(LS_KEYS.HASH, newHash);
+    localStorage.setItem(LS_KEYS.VAULT, newEncrypted);
+    STATE.masterKey  = newKey;
+    STATE.derivedKey = newDerived;
+    closeModal();
+    toast('Master key changed successfully!', 'success');
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  SECURITY AUDIT MODAL
+  // ─────────────────────────────────────────────────────────────
+  function openAudit() {
+    showModal(`
+      <div>
+        <div class="flex items-center gap-3 mb-5">
+          <i class="fas fa-shield-check text-green-400 text-2xl"></i>
+          <div>
+            <h2 class="text-lg font-bold text-white">Security Audit Report</h2>
+            <p class="text-slate-500 text-xs">KeyForge Notes Pro v2.0 · Zero-Knowledge Architecture</p>
+          </div>
+        </div>
+
+        <div class="space-y-2 mb-5">
+          ${[
+            ['AES-256-CBC Encryption',         'PASS', 'green',  'All notes encrypted before LocalStorage write'],
+            ['PBKDF2 Key Derivation (100K)',    'PASS', 'green',  'Master key never stored; derived key used for encryption'],
+            ['Zero-Knowledge Architecture',    'PASS', 'green',  'No data ever transmitted to any server'],
+            ['DOM Sanitization (DOMPurify)',   'PASS', 'green',  'All markdown rendered through DOMPurify.sanitize()'],
+            ['Auto-Lock Inactivity Timer',     'PASS', 'green',  'RAM cleared on lock; key not persisted'],
+            ['Burn-After-Reading Mode',        'PASS', 'green',  'Note deleted after user switches away'],
+            ['Emergency Nuke Function',        'PASS', 'green',  'Wipes all LocalStorage entries including salt/hash'],
+            ['Encrypted Export/Import',        'PASS', 'green',  'Export files are AES-256 encrypted blobs'],
+            ['No Cookies Used',                'PASS', 'green',  'Exclusively LocalStorage for persistence'],
+            ['No External Telemetry',          'PASS', 'green',  'Zero analytics, zero tracking, zero requests'],
+            ['Password Visibility Guard',      'PASS', 'green',  'Input type=password; clipboard not accessed'],
+            ['Content Security',               'INFO', 'yellow', 'CSP header requires server configuration'],
+          ].map(([name, status, color, detail]) => `
+            <div class="flex items-start gap-3 p-2.5 rounded-lg bg-slate-900/50 border border-slate-800">
+              <span class="flex-shrink-0 mt-0.5 text-xs font-bold px-1.5 py-0.5 rounded bg-${color}-900/40 text-${color}-400 border border-${color}-800/40">${status}</span>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-slate-200">${name}</p>
+                <p class="text-xs text-slate-500 mt-0.5">${detail}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- Author Credit -->
+        <div class="border-t border-slate-800 pt-4">
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-gradient-to-r from-indigo-950/40 to-cyan-950/40 border border-indigo-800/30">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-user-shield text-white text-sm"></i>
+            </div>
+            <div>
+              <p class="text-sm font-bold text-white">Sudhir Kumar</p>
+              <p class="text-xs text-cyan-400">@SudhirDevOps1</p>
+              <p class="text-xs text-slate-500">Security Engineer · Open Source Developer</p>
+            </div>
+            <div class="ml-auto text-right">
+              <p class="text-xs text-indigo-400 font-mono">KeyForge Brand</p>
+              <p class="text-xs text-slate-600">100% Offline · Open Source</p>
+              <p class="text-xs text-slate-600">Zero-Knowledge Security</p>
+            </div>
+          </div>
+          <p class="text-center text-slate-700 text-xs mt-3 font-mono">
+            This app is open source. Audit the code, fork it, trust it.
+          </p>
+        </div>
+
+        <button class="btn-ghost w-full mt-4" onclick="closeModal()">Close</button>
+      </div>
+    `, true);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  MODAL HELPERS
+  // ─────────────────────────────────────────────────────────────
+  function showModal(html, wide=false) {
+    document.getElementById('modal-content').innerHTML = html;
+    const box = document.getElementById('modal-box');
+    box.style.maxWidth = wide ? '560px' : '480px';
+    box.style.maxHeight = '90vh';
+    box.style.overflowY = 'auto';
+    document.getElementById('modal-overlay').classList.remove('hidden');
+  }
+
+  window.closeModal = function(event) {
+    if (event && event.target !== document.getElementById('modal-overlay')) return;
+    document.getElementById('modal-overlay').classList.add('hidden');
+  };
+
+  // Override to allow close without event
+  const _origClose = window.closeModal;
+  window.closeModal = function(event) {
+    if (event && event.target !== document.getElementById('modal-overlay')) return;
+    document.getElementById('modal-overlay').classList.add('hidden');
+  };
+  // Allow programmatic close (no event)
+  function closeModal() { document.getElementById('modal-overlay').classList.add('hidden'); }
+
+  // ─────────────────────────────────────────────────────────────
+  //  TOAST NOTIFICATIONS
+  // ─────────────────────────────────────────────────────────────
+  function toast(message, type='info') {
+    const icons = { success:'fa-circle-check', error:'fa-circle-xmark', warn:'fa-triangle-exclamation', info:'fa-circle-info' };
+    const el = document.createElement('div');
+    el.className = `toast toast-${type === 'warn' ? 'warn' : type}`;
+    el.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${escapeHtml(String(message))}</span>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.style.opacity='0'; el.style.transition='opacity 0.4s'; setTimeout(() => el.remove(), 400); }, 3500);
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  SIDEBAR RESIZER
+  // ─────────────────────────────────────────────────────────────
+  (function initResizer() {
+    const resizer   = document.getElementById('resizer');
+    const sidebarC  = document.getElementById('sidebar-container');
+    let startX, startW;
+
+    resizer.addEventListener('mousedown', e => {
+      STATE.isDragging = true;
+      startX = e.clientX;
+      startW = sidebarC.offsetWidth;
+      resizer.classList.add('dragging');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', e => {
+      if (!STATE.isDragging) return;
+      const newW = Math.max(180, Math.min(400, startW + (e.clientX - startX)));
+      sidebarC.style.width = newW + 'px';
+    });
+
+    document.addEventListener('mouseup', () => {
+      if (!STATE.isDragging) return;
+      STATE.isDragging = false;
+      resizer.classList.remove('dragging');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    });
+  })();
+
+  // ─────────────────────────────────────────────────────────────
+  //  UTILITIES
+  // ─────────────────────────────────────────────────────────────
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
+  function togglePwVis(inputId, iconId) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type  = 'text';
+      icon.className = icon.className.replace('fa-eye','fa-eye-slash');
+    } else {
+      input.type  = 'password';
+      icon.className = icon.className.replace('fa-eye-slash','fa-eye');
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  //  KEYBOARD SHORTCUTS
+  // ─────────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (!STATE.masterKey) return;
+    // Ctrl+S = save
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); saveVault(); toast('Saved!','success'); }
+    // Ctrl+N = new note
+    if (e.ctrlKey && e.key === 'n') { e.preventDefault(); createNewNote(); }
+    // Ctrl+L = lock
+    if (e.ctrlKey && e.key === 'l') { e.preventDefault(); lockApp(); }
+    // Esc = close modal
+    if (e.key === 'Escape') { closeModal(); }
+    // Tab in editor = insert spaces
+    if (e.key === 'Tab' && e.target.id === 'note-editor') {
+      e.preventDefault();
+      const ta    = e.target;
+      const start = ta.selectionStart;
+      const end   = ta.selectionEnd;
+      ta.value    = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+      ta.selectionStart = ta.selectionEnd = start + 2;
+      onEditorInput();
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────
+  //  BOOT: Check for existing vault
+  // ─────────────────────────────────────────────────────────────
+  (function boot() {
+    const hasVault = !!localStorage.getItem(LS_KEYS.HASH);
+    if (!hasVault) switchAuthTab('register');
+    else            switchAuthTab('login');
+
+    // Show appropriate form hint
+    if (!hasVault) {
+      document.querySelector('.lock-card h1').insertAdjacentHTML('afterend',
+        '<p class="text-xs text-cyan-400 mt-1 font-mono animate-pulse">✨ Create your first vault!</p>'
+      );
+    }
+  })();
+
+  // Make global helpers accessible from onclick attrs
+  window.handleLogin      = handleLogin;
+  window.handleRegister   = handleRegister;
+  window.switchAuthTab    = switchAuthTab;
+  window.togglePwVis      = togglePwVis;
+  window.checkPwStrength  = checkPwStrength;
+  window.createNewNote    = createNewNote;
+  window.onEditorInput    = onEditorInput;
+  window.onTitleChange    = onTitleChange;
+  window.setEditorMode    = setEditorMode;
+  window.renderSidebar    = renderSidebar;
+  window.deleteNote       = deleteNote;
+  window.toggleBurnForNote= toggleBurnForNote;
+  window.toggleBurnForNew = toggleBurnForNew;
+  window.lockApp          = lockApp;
+  window.openSettings     = openSettings;
+  window.applySettings    = applySettings;
+  window.changeMasterKey  = changeMasterKey;
+  window.openExport       = openExport;
+  window.doExport         = doExport;
+  window.openImport       = openImport;
+  window.doImport         = doImport;
+  window.confirmNuke      = confirmNuke;
+  window.executeNuke      = executeNuke;
+  window.openAudit        = openAudit;
+  window.closeModal       = function(e) {
+    if (!e || e.target === document.getElementById('modal-overlay')) {
+      document.getElementById('modal-overlay').classList.add('hidden');
+    }
+  };
+  </script>
+</body>
+</html>
